@@ -88,7 +88,7 @@ class Inimigo:
         self.running = True
 
 
-        if id == 0:
+        '''if id == 0:
             self.thread = threading.Thread(target=self.run_nuvem)
         elif id == 1:
             self.thread = threading.Thread(target=self.run_redes)
@@ -145,7 +145,17 @@ class Inimigo:
             with inimigo_lock:
                 if moving and not game_over and not game_won:
                     operacional_x, operacional_y, operacional_direction = self.move_operacional()
-            time.sleep(0.05)
+            time.sleep(0.05)'''
+    def draw(self):
+        if (not powerup and not self.dead) or (eaten_inimigo[self.id] and powerup and not self.dead):
+            screen.blit(self.img, (self.x_pos, self.y_pos))
+        elif powerup and not self.dead and not eaten_inimigo[self.id]:
+            screen.blit(turbo_img, (self.x_pos, self.y_pos))
+        else:
+            screen.blit(check_img, (self.x_pos, self.y_pos))
+        ghost_rect = pygame.rect.Rect((self.center_x - 18, self.center_y - 18), (36, 36))
+        return ghost_rect
+
     def check_collisions(self): # D, E, C, B
         # semáforo
         with inimigo_lock:
@@ -995,10 +1005,10 @@ def get_targets(opera_x, opera_y, compu_x, compu_y, nuve_x, nuve_y, rede_x, rede
 
 run = True
 
-nuvem = Inimigo(nuvem_x, nuvem_y, targets[0], inimigo_speeds[0], nuvem_img, nuvem_direction, nuvem_dead, nuvem_box, 0)
-redes = Inimigo(redes_x, redes_y, targets[1], inimigo_speeds[1], redes_img, redes_direction, redes_dead, redes_box, 1)
-computacional = Inimigo(computacional_x, computacional_y, targets[2], inimigo_speeds[2], computacional_img, computacional_direction, computacional_dead, computacional_box, 2)
-operacional = Inimigo(operacional_x, operacional_y, targets[3], inimigo_speeds[3], operacional_img, operacional_direction, operacional_dead, operacional_box, 3)
+#nuvem = Inimigo(nuvem_x, nuvem_y, targets[0], inimigo_speeds[0], nuvem_img, nuvem_direction, nuvem_dead, nuvem_box, 0)
+#redes = Inimigo(redes_x, redes_y, targets[1], inimigo_speeds[1], redes_img, redes_direction, redes_dead, redes_box, 1)
+#computacional = Inimigo(computacional_x, computacional_y, targets[2], inimigo_speeds[2], computacional_img, computacional_direction, computacional_dead, computacional_box, 2)
+#operacional = Inimigo(operacional_x, operacional_y, targets[3], inimigo_speeds[3], operacional_img, operacional_direction, operacional_dead, operacional_box, 3)
 
 while run:
     timer.tick(fpd)
@@ -1054,15 +1064,15 @@ while run:
     player_circle = pygame.draw.circle(screen, 'black', (center_x, center_y), 21, 2)
     draw_player()
 
-    #nuvem = Inimigo(nuvem_x, nuvem_y, targets[0], inimigo_speeds[0], nuvem_img, nuvem_direction, nuvem_dead, nuvem_box, 0)
-    #redes = Inimigo(redes_x, redes_y, targets[1], inimigo_speeds[1], redes_img, redes_direction, redes_dead, redes_box, 1)
-    #computacional = Inimigo(computacional_x, computacional_y, targets[2], inimigo_speeds[2], computacional_img, computacional_direction, computacional_dead, computacional_box, 2)
-    #operacional = Inimigo(operacional_x, operacional_y, targets[3], inimigo_speeds[3], operacional_img, operacional_direction, operacional_dead, operacional_box, 3)
-    with inimigo_lock:
+    nuvem = Inimigo(nuvem_x, nuvem_y, targets[0], inimigo_speeds[0], nuvem_img, nuvem_direction, nuvem_dead, nuvem_box, 0)
+    redes = Inimigo(redes_x, redes_y, targets[1], inimigo_speeds[1], redes_img, redes_direction, redes_dead, redes_box, 1)
+    computacional = Inimigo(computacional_x, computacional_y, targets[2], inimigo_speeds[2], computacional_img, computacional_direction, computacional_dead, computacional_box, 2)
+    operacional = Inimigo(operacional_x, operacional_y, targets[3], inimigo_speeds[3], operacional_img, operacional_direction, operacional_dead, operacional_box, 3)
+    '''with inimigo_lock:
         nuvem.rect = nuvem.draw()
         redes.rect = redes.draw()
         computacional.rect = computacional.draw()
-        operacional.rect = operacional.draw()
+        operacional.rect = operacional.draw()'''
 
     draw_alter()
     targets = get_targets(operacional_x, operacional_y, computacional_x, computacional_y, nuvem_x, nuvem_y, redes_x, redes_y)
@@ -1438,8 +1448,8 @@ while run:
         computacional_dead = False
     pygame.display.flip()
 
-nuvem.thread.join()
-redes.thread.join()
-computacional.thread.join()
-operacional.thread.join()
+#nuvem.thread.join()
+#redes.thread.join()
+#computacional.thread.join()
+#operacional.thread.join()
 pygame.quit()
