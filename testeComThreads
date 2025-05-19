@@ -1311,6 +1311,12 @@ while run:
             operacional.running = False
             run = False
 
+            nuvem.join()
+            redes.join()
+            computacional.join()
+            operacional.join()
+
+
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RIGHT and turns_allowed[0]:
                 direction_command = 0
