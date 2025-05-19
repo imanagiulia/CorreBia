@@ -22,10 +22,10 @@ PI = math.pi
 player_images = []
 for i in range (1, 3):
     player_images.append(pygame.transform.scale(pygame.image.load(f'assets/{i}.png'), (45, 45)))
-cloudius_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/cloudius.png'), (45, 45))
-ping_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/ping.png'), (45, 45))
-glitch_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/glitch.png'), (45, 45))
-kernel_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/kernel.png'), (45, 45))
+cloudius_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/nuvem.png'), (45, 45))
+ping_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/redes.png'), (45, 45))
+glitch_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/computacional.png'), (45, 45))
+kernel_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/operacional.png'), (45, 45))
 check_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/check.png'), (45, 45))
 turbo_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/turbo.png'), (45, 45))
 # posição inicial Bia
@@ -53,6 +53,7 @@ player_speed = 3
 score = 0
 powerup = False
 powerup_count = 0
+# nuvem, redes, compu, opera
 eaten_inimigo = [False, False, False, False]
 targets = [(player_x, player_y), (player_x, player_y), (player_x, player_y), (player_x, player_y)]
 cloudius_dead = False
@@ -64,6 +65,7 @@ ping_box = False
 glitch_box = False
 kernel_box = False
 moving = False
+# nuvem, redes, compu, opera
 inimigo_speeds = [2, 2, 2, 2]
 startup_counter = 0
 lives = 3
@@ -87,65 +89,6 @@ class Inimigo:
         self.rect = self.draw()
         self.running = True
 
-
-        '''if id == 0:
-            self.thread = threading.Thread(target=self.run_cloudius)
-        elif id == 1:
-            self.thread = threading.Thread(target=self.run_ping)
-        elif id == 2:
-            self.thread = threading.Thread(target=self.run_glitch)
-        elif id == 3:
-            self.thread = threading.Thread(target=self.run_kernel)
-
-        self.thread.daemon = True # encerrar a thread qnd programa principal encerrar
-        self.thread.start() # inicia a thread
-
-    def draw(self):
-        if (not powerup and not self.dead) or (eaten_inimigo[self.id] and powerup and not self.dead):
-            screen.blit(self.img, (self.x_pos,self.y_pos))
-        elif powerup and not self.dead and not eaten_inimigo[self.id]:
-            screen.blit(turbo_img, (self.x_pos,self.y_pos))
-        else:
-            screen.blit(check_img, (self.x_pos,self.y_pos))
-        inimigo_rect = pygame.rect.Rect((self.center_x - 18, self.center_y - 18), (36, 36))
-        return inimigo_rect
-
-    def run_cloudius(self):
-        while self.running:
-            with inimigo_lock:
-                if moving and not game_over and not game_won:
-                    if not cloudius_dead and not self.in_box:
-                        cloudius_x, cloudius_y, cloudius_direction = self.move_cloudius()
-                    else:
-                        cloudius_x, cloudius_y, cloudius_direction = self.move_kernel()
-            time.sleep(0.05)
-
-    def run_ping(self):
-        while self.running:
-            with inimigo_lock:
-                if moving and not game_over and not game_won:
-                    if not ping_dead and not self.in_box:
-                        ping_x, ping_y, ping_direction = self.move_ping()
-                    else:
-                        ping_x, ping_y, ping_direction = self.move_kernel()
-            time.sleep(0.05)
-
-    def run_glitch(self):
-        while self.running:
-            with inimigo_lock:
-                if moving and not game_over and not game_won:
-                    if not glitch_dead and not self.in_box:
-                        glitch_x, glitch_y, glitch_direction = self.move_glitch()
-                    else:
-                        glitch_x, glitch_y, glitch_direction = self.move_kernel()
-            time.sleep(0.05)
-
-    def run_kernel(self):
-        while self.running:
-            with inimigo_lock:
-                if moving and not game_over and not game_won:
-                    kernel_x, kernel_y, kernel_direction = self.move_kernel()
-            time.sleep(0.05)'''
     def draw(self):
         if (not powerup and not self.dead) or (eaten_inimigo[self.id] and powerup and not self.dead):
             screen.blit(self.img, (self.x_pos, self.y_pos))
@@ -358,7 +301,7 @@ class Inimigo:
                 self.x_pos -= 30
             return self.x_pos, self.y_pos, self.direction
 
-    def move_cloudius(self): # vira sempre que colidir com paping, caso contrário continua reto
+    def move_cloudius(self): # vira sempre que colidir com parede, caso contrário continua reto
         #semáforo
         with inimigo_lock: # D, E, C, B
             if self.direction == 0:
@@ -924,7 +867,7 @@ def move_player(play_x, play_y):
     elif direction == 3 and turns_allowed[3]:
         play_y += player_speed
 
-        # Limita a posição dentro dos limites da tela
+    # Limita a posição dentro dos limites da tela
     play_x = max(-50, min(play_x, WIDTH + 50))
     play_y = max(0, min(play_y, HEIGHT - 50))
 
@@ -1005,10 +948,6 @@ def get_targets(kerne_x, kerne_y, glitc_x, glitc_y, nuve_x, nuve_y, pin_x, pin_y
 
 run = True
 
-#cloudius = Inimigo(cloudius_x, cloudius_y, targets[0], inimigo_speeds[0], cloudius_img, cloudius_direction, cloudius_dead, cloudius_box, 0)
-#ping = Inimigo(ping_x, ping_y, targets[1], inimigo_speeds[1], ping_img, ping_direction, ping_dead, ping_box, 1)
-#glitch = Inimigo(glitch_x, glitch_y, targets[2], inimigo_speeds[2], glitch_img, glitch_direction, glitch_dead, glitch_box, 2)
-#kernel = Inimigo(kernel_x, kernel_y, targets[3], inimigo_speeds[3], kernel_img, kernel_direction, kernel_dead, kernel_box, 3)
 
 while run:
     timer.tick(fpd)
@@ -1448,8 +1387,4 @@ while run:
         glitch_dead = False
     pygame.display.flip()
 
-#cloudius.thread.join()
-#ping.thread.join()
-#glitch.thread.join()
-#kernel.thread.join()
 pygame.quit()
