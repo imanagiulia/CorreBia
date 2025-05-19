@@ -87,12 +87,12 @@ class Inimigo:
     def run(self):
         while self.running:
             with self.lock:
-                if self.dead and ot self.in_box:
-                    if self.tipo == 0
+                if self.dead and not self.in_box:
+                    if self.tipo == 0:
                         self.x_pos, self.y_pos, self.direction = self.move_nuvem()
-                    if self.tipo == 1
+                    if self.tipo == 1:
                         self.x_pos, self.y_pos, self.direction = self.move_redes()
-                    if self.tipo == 2
+                    if self.tipo == 2:
                         self.x_pos, self.y_pos, self.direction = self.move_computacional()
                 else:
                     self.x_pos, self.y_pos, self.direction = self.move_operacional()

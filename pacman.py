@@ -1,9 +1,9 @@
 import copy
-import threading
 from board import boards
 import pygame
 import math
 from threading import Lock
+import threading
 import time
 
 pygame.init()
@@ -13,13 +13,14 @@ WIDTH = 900
 HEIGHT = 950
 screen = pygame.display.set_mode([WIDTH, HEIGHT])
 timer = pygame.time.Clock()
-fpd = 60
+fps = 60
 font = pygame.font.Font('freesansbold.ttf', 20)
 level_inicial = boards
 level = copy.deepcopy(boards)
 color = 'orange'
 PI = math.pi
 player_images = []
+# upload e transformação do tam das imagens da Bia e dos inimigos 
 for i in range (1, 3):
     player_images.append(pygame.transform.scale(pygame.image.load(f'assets/{i}.png'), (45, 45)))
 cloudius_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/nuvem.png'), (45, 45))
@@ -44,6 +45,7 @@ glitch_direction = 2
 kernel_x = 440
 kernel_y = 438
 kernel_direction = 2
+# direção inicial Bia
 direction = 0
 counter = 0
 flicker = 0
@@ -90,12 +92,14 @@ class Inimigo:
         self.running = True
 
     def draw(self):
+        # alteração das imagens conforme powerup/morte
         if (not powerup and not self.dead) or (eaten_inimigo[self.id] and powerup and not self.dead):
             screen.blit(self.img, (self.x_pos, self.y_pos))
         elif powerup and not self.dead and not eaten_inimigo[self.id]:
             screen.blit(turbo_img, (self.x_pos, self.y_pos))
         else:
             screen.blit(check_img, (self.x_pos, self.y_pos))
+        # deseno de retangulo para ser usado em verificação de morte dos inimigos
         ghost_rect = pygame.rect.Rect((self.center_x - 18, self.center_y - 18), (36, 36))
         return ghost_rect
 
@@ -784,6 +788,7 @@ def draw_board(level):
 
 def draw_player():
     # direita, esquerda, cima, baixo
+    # gira as imagens da bia conforme a direção
     if direction == 0:
         screen.blit(player_images[counter // 15 % len(player_images)], (player_x, player_y))
     elif direction == 1:
@@ -827,30 +832,6 @@ def check_position(centerx, centery):
             if level[centery // cell_height][(centerx - margem) // cell_width] < 3:
                 turns[1] = True  # Pode ir para esquerda
 
-
-        #if direction == 2 or direction == 3:
-         #   if 12 <= centerx % n2 <= 18:
-          #      if level[(centery + n3) // n1][centerx // n2] < 3:
-           #         turns[3] = True
-            #    if level[(centery - n3) // n1][centerx // n2] < 3:
-             #       turns[2] = True
-            #if 12 <= centery % n1 <= 18:
-             #   if level[centery // n1][(centerx - n2) // n2] < 3:
-              #      turns[1] = True
-               # if level[centery // n1][(centerx + n2) // n2] < 3:
-                #    turns[0] = True
-
-      #  if direction == 0 or direction == 1:
-       #     if 12 <= centerx % n2 <= 18:
-        #        if level[(centery + n1) // n1][centerx // n2] < 3:
-         #           turns[3] = True
-          #      if level[(centery - n1) // n1][centerx // n2] < 3:
-           #         turns[2] = True
-            #if 12 <= centery % n1 <= 18:
-             #   if level[centery // n1][(centerx - n3) // n2] < 3:
-              #      turns[1] = True
-               # if level[centery // n1][(centerx + n3) // n2] < 3:
-                #    turns[0] = True
     else:
         turns[0] = True
         turns[1] = True
@@ -950,7 +931,7 @@ run = True
 
 
 while run:
-    timer.tick(fpd)
+    timer.tick(fps)
     if counter < 19:
         counter += 1
         if counter > 2:
@@ -958,12 +939,14 @@ while run:
     else:
         counter = 0
         flicker = True
+
     if powerup == True and powerup_count < 600:
         powerup_count += 1
     elif powerup and powerup_count >= 600:
         powerup_count = 0
         powerup = False
         eaten_inimigo = [False, False, False, False]
+
     if startup_counter  < 180 and not game_over and not game_won:
         moving = False
         startup_counter += 1
@@ -974,6 +957,7 @@ while run:
     draw_board(level)
     center_x = player_x + 25
     center_y = player_y + 25
+    # definição das velocidades dos inimigos
     if powerup:
         inimigo_speeds = [1, 1, 1, 1]
     else:
@@ -1007,11 +991,6 @@ while run:
     ping = Inimigo(ping_x, ping_y, targets[1], inimigo_speeds[1], ping_img, ping_direction, ping_dead, ping_box, 1)
     glitch = Inimigo(glitch_x, glitch_y, targets[2], inimigo_speeds[2], glitch_img, glitch_direction, glitch_dead, glitch_box, 2)
     kernel = Inimigo(kernel_x, kernel_y, targets[3], inimigo_speeds[3], kernel_img, kernel_direction, kernel_dead, kernel_box, 3)
-    '''with inimigo_lock:
-        cloudius.rect = cloudius.draw()
-        ping.rect = ping.draw()
-        glitch.rect = glitch.draw()
-        kernel.rect = kernel.draw()'''
 
     draw_alter()
     targets = get_targets(kernel_x, kernel_y, glitch_x, glitch_y, cloudius_x, cloudius_y, ping_x, ping_y)
