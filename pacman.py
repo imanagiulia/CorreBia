@@ -91,7 +91,19 @@ class Inimigo:
         self.rect = self.draw()
         self.running = True
 
-    def draw(self):
+        '''if id == 0:
+            self.thread = threading.Thread(target=self.run_nuvem)
+        elif id == 1:
+            self.thread = threading.Thread(target=self.run_redes)
+        elif id == 2:
+            self.thread = threading.Thread(target=self.run_computacional)
+        elif id == 3:
+            self.thread = threading.Thread(target=self.run_operacional)
+
+        self.thread.daemon = True # encerrar a thread qnd programa principal encerrar
+        self.thread.start() # inicia a thread'''
+
+    '''def draw(self):
         # alteração das imagens conforme powerup/morte
         if (not powerup and not self.dead) or (eaten_inimigo[self.id] and powerup and not self.dead):
             screen.blit(self.img, (self.x_pos, self.y_pos))
@@ -102,7 +114,47 @@ class Inimigo:
         # deseno de retangulo para ser usado em verificação de morte dos inimigos
         ghost_rect = pygame.rect.Rect((self.center_x - 18, self.center_y - 18), (36, 36))
         return ghost_rect
+    
+    def run_nuvem(self):
+        while self.running:
+            with inimigo_lock:
+                if moving and not game_over and not game_won:
+                    if not nuvem_dead and not self.in_box:
+                        nuvem_x, nuvem_y, nuvem_direction = self.move_nuvem()
+                    else:
+                        nuvem_x, nuvem_y, nuvem_direction = self.move_operacional()
+            time.sleep(0.05)
 
+    def run_redes(self):
+        while self.running:
+            with inimigo_lock:
+                if moving and not game_over and not game_won:
+                    if not redes_dead and not self.in_box:
+                        redes_x, redes_y, redes_direction = self.move_redes()
+                    else:
+                        redes_x, redes_y, redes_direction = self.move_operacional()
+            time.sleep(0.05)
+
+    def run_computacional(self):
+        while self.running:
+            with inimigo_lock:
+                if moving and not game_over and not game_won:
+                    if not computacional_dead and not self.in_box:
+                        computacional_x, computacional_y, computacional_direction = self.move_computacional()
+                    else:
+                        computacional_x, computacional_y, computacional_direction = self.move_operacional()
+            time.sleep(0.05)
+
+    def run_operacional(self):
+        while self.running:
+            with inimigo_lock:
+                if moving and not game_over and not game_won:
+                    operacional_x, operacional_y, operacional_direction = self.move_operacional()
+            time.sleep(0.05)'''
+
+    # usa center_x e center_y para saber em qual célula do mapa os inimigos estão
+    # para cada direção (direita, esquerda, cima, baixo) verifica se a célula ao lado é um caminho livre (menores que 3) ou o portão da casa dos inimigos (igual 9)
+    # ajuta para movimentos adjacentes, ou seja, se ele esta no meio da célula ele também vai fazer a verificação para evitar que o inimigo fique travado nsa esquinas
     def check_collisions(self): # D, E, C, B
         # semáforo
         with inimigo_lock:
@@ -111,7 +163,7 @@ class Inimigo:
             margem = 15
             self.turns = [False, False, False, False]
             if 0 < self.center_x // 30 < 29:
-                if level[(self.center_y - margem) // cell_height][self.center_x // cell_width] == 9:
+                if level[(self.center_y - margem) // cell_height][self.center_x // cell_width] == 9: # verifica se é o portão dos inimigos (saída da caixa)
                     self.turns[2] = True
                 if level[self.center_y // cell_height][(self.center_x - margem) // cell_width] < 3 \
                     or level[self.center_y // cell_height][(self.center_x - margem) // cell_width] == 9 and (self.dead or self.in_box):
@@ -160,12 +212,13 @@ class Inimigo:
             else:
                 self.turns[0] = True
                 self.turns[1] = True
-            if 350 <= self.x_pos < 550 and 370 < self.y_pos < 480:
+            if 350 <= self.x_pos < 550 and 370 < self.y_pos < 480: # verifica se está dentro da caixa
                 self.in_box = True
             else:
                 self.in_box = False
             return self.turns, self.in_box
-
+    
+    # sempre segue a bia, compara a posição dele com a da bia e escolhe a direção que mais se aproxima dela
     def move_kernel(self): # vira sempre que for vantajoso para perseguição
         #semáforo
         with inimigo_lock: # D, E, C, B
@@ -304,7 +357,8 @@ class Inimigo:
             elif self.x_pos > 900:
                 self.x_pos -= 30
             return self.x_pos, self.y_pos, self.direction
-
+    
+    # segue sempre reto até não poder mais, quando bate em uma parede escolhe aleatoriamente entre as direções possiveis e segue.
     def move_cloudius(self): # vira sempre que colidir com parede, caso contrário continua reto
         #semáforo
         with inimigo_lock: # D, E, C, B
@@ -410,7 +464,8 @@ class Inimigo:
             elif self.x_pos > 900:
                 self.x_pos -= 30
             return self.x_pos, self.y_pos, self.direction
-
+   
+    # perseguição vertical
     def move_ping(self): # vira para cima ou para baixo qualquer momento para perseguir, mas para esquerda ou para direita somente em colisões
         #semáforo
         with inimigo_lock: # D, E, C, B
@@ -539,7 +594,8 @@ class Inimigo:
             elif self.x_pos > 900:
                 self.x_pos -= 30
             return self.x_pos, self.y_pos, self.direction
-
+    
+    # perseguição horizontal
     def move_glitch(self): # vira para a esquera ou para a direita sempre que for vantajoso para perseguição, mas para cima ou para baixo apenas em cplisões
         #semáforo
         with inimigo_lock: # D, E, C, B
@@ -683,6 +739,14 @@ def draw_alter():
         gameover_text = font.render('VICTORY!!! Aperte [espaço] para recomeçar!', True, 'yellow')
         screen.blit(gameover_text, (100, 300))
 
+# verifica se a Bia está em cima dos pontinhos ou power up
+# divide o mapa em uma grade invisivel
+# calcula em qual célula da grade o jogador está 
+    # center_x e center_y são o centro da bia
+# após  a verificação:
+    # bia no pontinho = remove o ponto do mapa modificando a cópia da 'matriz' que representa o mapa, de 1 para 0. acrescenta 10 pontos
+    # bia no powerup = remove o ponto do mapa modificando a cópia da 'matriz' que representa o mapa, de 2 para 0. acrescenta 50 pontos e deixa os inimigos aptos a serem comidos. 
+    # powerup fica ativo por 10s, toda vez que Bia passa por um powerup zera a contagem de inimigos comidos
 def check_collisions(scor, power, power_count, eaten_inimigo):
     cell_height = (HEIGHT - 50)  // 32
     cell_widht = WIDTH // 30
@@ -798,6 +862,9 @@ def draw_player():
     elif direction == 3:
         screen.blit(pygame.transform.rotate(player_images[counter // 15 % len(player_images)], -90), (player_x, player_y))
 
+# verifica para onde o jogador pode virar
+# basicamente verifica se tem alguma parede ao redor do jogador - na matriz que representa o mapa, apenas os números menores que 3 representam passagem livre
+# se não tiver parede em tal direção, torna possível a virada do personagem para aquele lado. 
 def check_position(centerx, centery):
     # D, E, C, B
     turns = [False, False, False, False]
@@ -854,78 +921,90 @@ def move_player(play_x, play_y):
 
     return play_x, play_y
 
-def get_targets(kerne_x, kerne_y, glitc_x, glitc_y, nuve_x, nuve_y, pin_x, pin_y):
-    runaway_x = 900 if player_x < 450 else 0
-    runaway_y = 900 if player_y < 450 else 0
-    return_target = (380, 400)
-    if powerup:
-        if not cloudius.dead and not eaten_inimigo[0]:
-            nuve_target = (runaway_x, runaway_y)
-        elif not cloudius.dead and eaten_inimigo[0]:
-            if 340 < nuve_x < 560 and 340 < nuve_y < 500:
-                nuve_target = (400, 100)
-            else:
-                nuve_target = (player_x, player_y)
-        else:
-            nuve_target = return_target
-        if not ping.dead and not eaten_inimigo[1]:
-            pin_target = (runaway_x, player_y)
-        elif not ping.dead and eaten_inimigo[1]:
-            if 340 < pin_x < 560 and 340 < pin_y < 500:
-                pin_target = (400, 100)
-            else:
-                pin_target = (player_x, player_y)
-        else:
-            pin_target = return_target
-        if not kernel.dead and not eaten_inimigo[2]:
-            kerne_target = (player_x, runaway_y)
-        elif not kernel.dead and eaten_inimigo[2]:
-            if 340 < kerne_x < 560 and 340 < kerne_y < 500:
-                kerne_target = (400, 100)
-            else:
-                kerne_target = (player_x, player_y)
-        else:
-            kerne_target = return_target
-        if not glitch.dead and not eaten_inimigo[3]:
-            glitc_target = (450, 450)
-        elif not glitch.dead and eaten_inimigo[3]:
-            if 340 < glitc_x < 560 and 340 < glitc_y < 500:
-                glitc_target = (400, 100)
-            else:
-                glitc_target = (player_x, player_y)
-        else:
-            glitc_target = return_target
-    else:
-        if not cloudius.dead:
-            if 340 < nuve_x < 560 and 340 < nuve_y < 500: # está na caixa
-                nuve_target = (400, 100)
-            else:
-                nuve_target = (player_x, player_y)
-        else:
-            nuve_target = return_target
-        if not ping.dead:
-            if 340 < pin_x < 560 and 340 < pin_y < 500:
-                pin_target = (400, 100)
-            else:
-                pin_target = (player_x, player_y)
-        else:
-            pin_target = return_target
-        if not kernel.dead:
-            if 340 < kerne_x < 560 and 340 < kerne_y < 500:
-                kerne_target = (400, 100)
-            else:
-                kerne_target = (player_x, player_y)
-        else:
-            kerne_target = return_target
-        if not glitch.dead:
-            if 340 < glitc_x < 560 and 340 < glitc_y < 500:
-                glitc_target = (400, 100)
-            else:
-                glitc_target = (player_x, player_y)
-        else:
-            glitc_target = return_target
 
-    return [nuve_target, pin_target, kerne_target, glitc_target]
+# define para onde os inimigos devem ir, dependendo do estado do jogo
+# cada inimigo tem um comportamento diferente
+# sem o powerup e dentro da caixa:
+    # inimigos tentam sair da caixa
+# sem o powerup e fora da caixa:
+    # inimigos perseguem a bia (player_x, player_y)   
+# com power up e sem serem comidos:
+    # fogem da bia - vão para cantos opostos do mapa
+# com power up e  comidos:
+    # voltam para a caixa
+def get_targets(kerne_x, kerne_y, glitc_x, glitc_y, nuve_x, nuve_y, pin_x, pin_y):
+    with inimigo_lock:
+        runaway_x = 900 if player_x < 450 else 0
+        runaway_y = 900 if player_y < 450 else 0
+        return_target = (380, 400)
+        if powerup:
+            if not cloudius.dead and not eaten_inimigo[0]:
+                nuve_target = (runaway_x, runaway_y)
+            elif not cloudius.dead and eaten_inimigo[0]:
+                if 340 < nuve_x < 560 and 340 < nuve_y < 500:
+                    nuve_target = (400, 100)
+                else:
+                    nuve_target = (player_x, player_y)
+            else:
+                nuve_target = return_target
+            if not ping.dead and not eaten_inimigo[1]:
+                pin_target = (runaway_x, player_y)
+            elif not ping.dead and eaten_inimigo[1]:
+                if 340 < pin_x < 560 and 340 < pin_y < 500:
+                    pin_target = (400, 100)
+                else:
+                    pin_target = (player_x, player_y)
+            else:
+                pin_target = return_target
+            if not kernel.dead and not eaten_inimigo[2]:
+                kerne_target = (player_x, runaway_y)
+            elif not kernel.dead and eaten_inimigo[2]:
+                if 340 < kerne_x < 560 and 340 < kerne_y < 500:
+                    kerne_target = (400, 100)
+                else:
+                    kerne_target = (player_x, player_y)
+            else:
+                kerne_target = return_target
+            if not glitch.dead and not eaten_inimigo[3]:
+                glitc_target = (450, 450)
+            elif not glitch.dead and eaten_inimigo[3]:
+                if 340 < glitc_x < 560 and 340 < glitc_y < 500:
+                    glitc_target = (400, 100)
+                else:
+                    glitc_target = (player_x, player_y)
+            else:
+                glitc_target = return_target
+        else:
+            if not cloudius.dead:
+                if 340 < nuve_x < 560 and 340 < nuve_y < 500: # está na caixa
+                    nuve_target = (400, 100)
+                else:
+                    nuve_target = (player_x, player_y)
+            else:
+                nuve_target = return_target
+            if not ping.dead:
+                if 340 < pin_x < 560 and 340 < pin_y < 500:
+                    pin_target = (400, 100)
+                else:
+                    pin_target = (player_x, player_y)
+            else:
+                pin_target = return_target
+            if not kernel.dead:
+                if 340 < kerne_x < 560 and 340 < kerne_y < 500:
+                    kerne_target = (400, 100)
+                else:
+                    kerne_target = (player_x, player_y)
+            else:
+                kerne_target = return_target
+            if not glitch.dead:
+                if 340 < glitc_x < 560 and 340 < glitc_y < 500:
+                    glitc_target = (400, 100)
+                else:
+                    glitc_target = (player_x, player_y)
+            else:
+                glitc_target = return_target
+
+        return [nuve_target, pin_target, kerne_target, glitc_target]
 
 run = True
 
