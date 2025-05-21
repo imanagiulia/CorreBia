@@ -1,24 +1,28 @@
 import copy
 import threading
+import time
+
 from board import boards
 import pygame
 import math
-from threading import Lock
-import time
 
 pygame.init()
-inimigo_lock = Lock()
+inimigo_lock = threading.RLock()
+
+#confi jogo
 # tamanho do "console" do jogo
 WIDTH = 900
 HEIGHT = 950
 screen = pygame.display.set_mode([WIDTH, HEIGHT])
 timer = pygame.time.Clock()
-fpd = 60
+fps = 60
 font = pygame.font.Font('freesansbold.ttf', 20)
 level_inicial = boards
 level = copy.deepcopy(boards)
 color = 'orange'
 PI = math.pi
+
+#imgs
 player_images = []
 for i in range (1, 3):
     player_images.append(pygame.transform.scale(pygame.image.load(f'assets/{i}.png'), (45, 45)))
@@ -28,47 +32,56 @@ computacional_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/c
 operacional_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/operacional.png'), (45, 45))
 check_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/check.png'), (45, 45))
 turbo_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/turbo.png'), (45, 45))
+
+#variaveis player
 # posição inicial Bia
 player_x = 450
 player_y = 663
-# posição inicial inimigos
-nuvem_x = 56
-nuvem_y = 58
-nuvem_direction = 0
-redes_x = 400
-redes_y = 438
-redes_direction = 2
-computacional_x = 440
-computacional_y = 438
-computacional_direction = 2
-operacional_x = 440
-operacional_y = 438
-operacional_direction = 2
 direction = 0
-counter = 0
-flicker = 0
-# direita, esquerda, cima, baixo
 direction_command = 0
 player_speed = 3
+counter = 0
+flicker = 0
+
+# variaveis inimigos
+inimigo_speeds = [2, 2, 2, 2]
+eaten_inimigo = [False, False, False, False]
+targets = [(player_x, player_y), (player_x, player_y), (player_x, player_y), (player_x, player_y)]
+
+# posição inicial inimigos
+#nuvem_x = 56
+#nuvem_y = 58
+#nuvem_direction = 0
+#redes_x = 400
+#redes_y = 438
+#redes_direction = 2
+#computacional_x = 440
+#computacional_y = 438
+#computacional_direction = 2
+#operacional_x = 440
+#operacional_y = 438
+#operacional_direction = 2
+# direita, esquerda, cima, baixo
+
+
+# defi jogo
 score = 0
 powerup = False
 powerup_count = 0
-eaten_inimigo = [False, False, False, False]
-targets = [(player_x, player_y), (player_x, player_y), (player_x, player_y), (player_x, player_y)]
-nuvem_dead = False
-redes_dead = False
-computacional_dead = False
-operacional_dead = False
-nuvem_box = False
-redes_box = False
-computacional_box = False
-operacional_box = False
 moving = False
-inimigo_speeds = [2, 2, 2, 2]
-startup_counter = 0
 lives = 3
+startup_counter = 0
 game_over = False
 game_won = False
+
+#nuvem_dead = False
+#redes_dead = False
+#computacional_dead = False
+#operacional_dead = False
+#nuvem_box = False
+#redes_box = False
+#computacional_box = False
+#operacional_box = False
 
 class Inimigo:
     def __init__(self, x_coord, y_coord, target, speed, img, direction, dead, box, id):
@@ -83,22 +96,12 @@ class Inimigo:
         self.dead = dead
         self.in_box = box
         self.id = id
-        self.turns, self.in_box = self.check_collisions()
-        self.rect = self.draw()
+        self.turns = [False, False, False, False]
+        self.rect = pygame.Rect(self.x_pos, self.y_pos, 45, 45)
         self.running = True
-
-
-        '''if id == 0:
-            self.thread = threading.Thread(target=self.run_nuvem)
-        elif id == 1:
-            self.thread = threading.Thread(target=self.run_redes)
-        elif id == 2:
-            self.thread = threading.Thread(target=self.run_computacional)
-        elif id == 3:
-            self.thread = threading.Thread(target=self.run_operacional)
-
-        self.thread.daemon = True # encerrar a thread qnd programa principal encerrar
-        self.thread.start() # inicia a thread
+        self.thread = threading.Thread(target = self.move)
+        self.thread.daemon = True
+        self.thread.start()
 
     def draw(self):
         if (not powerup and not self.dead) or (eaten_inimigo[self.id] and powerup and not self.dead):
@@ -107,117 +110,141 @@ class Inimigo:
             screen.blit(turbo_img, (self.x_pos,self.y_pos))
         else:
             screen.blit(check_img, (self.x_pos,self.y_pos))
-        inimigo_rect = pygame.rect.Rect((self.center_x - 18, self.center_y - 18), (36, 36))
-        return inimigo_rect
+        self.rect = pygame.rect.Rect(self.x_pos, self.y_pos, 45, 45)
+        return self.rect
 
-    def run_nuvem(self):
-        while self.running:
-            with inimigo_lock:
-                if moving and not game_over and not game_won:
-                    if not nuvem_dead and not self.in_box:
-                        nuvem_x, nuvem_y, nuvem_direction = self.move_nuvem()
-                    else:
-                        nuvem_x, nuvem_y, nuvem_direction = self.move_operacional()
-            time.sleep(0.05)
 
-    def run_redes(self):
-        while self.running:
-            with inimigo_lock:
-                if moving and not game_over and not game_won:
-                    if not redes_dead and not self.in_box:
-                        redes_x, redes_y, redes_direction = self.move_redes()
-                    else:
-                        redes_x, redes_y, redes_direction = self.move_operacional()
-            time.sleep(0.05)
+   #def run_nuvem(self):
+    #    while self.running:
+     #       with inimigo_lock:
+      #          if moving and not game_over and not game_won:
+       #             if not nuvem_dead and not self.in_box:
+        #                nuvem_x, nuvem_y, nuvem_direction = self.move_nuvem()
+         #           else:
+          #              nuvem_x, nuvem_y, nuvem_direction = self.move_operacional()
 
-    def run_computacional(self):
-        while self.running:
-            with inimigo_lock:
-                if moving and not game_over and not game_won:
-                    if not computacional_dead and not self.in_box:
-                        computacional_x, computacional_y, computacional_direction = self.move_computacional()
-                    else:
-                        computacional_x, computacional_y, computacional_direction = self.move_operacional()
-            time.sleep(0.05)
 
-    def run_operacional(self):
-        while self.running:
-            with inimigo_lock:
-                if moving and not game_over and not game_won:
-                    operacional_x, operacional_y, operacional_direction = self.move_operacional()
-            time.sleep(0.05)'''
-    def draw(self):
-        if (not powerup and not self.dead) or (eaten_inimigo[self.id] and powerup and not self.dead):
-            screen.blit(self.img, (self.x_pos, self.y_pos))
-        elif powerup and not self.dead and not eaten_inimigo[self.id]:
-            screen.blit(turbo_img, (self.x_pos, self.y_pos))
-        else:
-            screen.blit(check_img, (self.x_pos, self.y_pos))
-        ghost_rect = pygame.rect.Rect((self.center_x - 18, self.center_y - 18), (36, 36))
-        return ghost_rect
+    #def run_redes(self):
+     #   while self.running:
+      #      with inimigo_lock:
+       #         if moving and not game_over and not game_won:
+        #            if not redes_dead and not self.in_box:
+         #               redes_x, redes_y, redes_direction = self.move_redes()
+          #          else:
+           #             redes_x, redes_y, redes_direction = self.move_operacional()
+
+
+   # def run_computacional(self):
+    #    while self.running:
+     #       with inimigo_lock:
+      #          if moving and not game_over and not game_won:
+       #             if not computacional_dead and not self.in_box:
+        #                computacional_x, computacional_y, computacional_direction = self.move_computacional()
+         #           else:
+          #              computacional_x, computacional_y, computacional_direction = self.move_operacional()
+
+
+   # def run_operacional(self):
+    #    while self.running:
+     #       with inimigo_lock:
+      #          if moving and not game_over and not game_won:
+       #             operacional_x, operacional_y, operacional_direction = self.move_operacional()
+
 
     def check_collisions(self): # D, E, C, B
         # semáforo
-        with inimigo_lock:
-            cell_height = (HEIGHT - 50) // 32
-            cell_width = (WIDTH // 30)
-            margem = 15
-            self.turns = [False, False, False, False]
-            if 0 < self.center_x // 30 < 29:
-                if level[(self.center_y - margem) // cell_height][self.center_x // cell_width] == 9:
-                    self.turns[2] = True
-                if level[self.center_y // cell_height][(self.center_x - margem) // cell_width] < 3 \
-                    or level[self.center_y // cell_height][(self.center_x - margem) // cell_width] == 9 and (self.dead or self.in_box):
-                    self.turns[1] = True
-                if level[self.center_y // cell_height][(self.center_x + margem) // cell_width] < 3 \
-                    or level[self.center_y // cell_height][(self.center_x + margem) // cell_width] == 9 and (self.dead or self.in_box):
-                    self.turns[0] = True
-                if level[(self.center_y + margem) // cell_height][self.center_x // cell_width] < 3 \
-                    or level[(self.center_y + margem) // cell_height][self.center_x // cell_width] == 9 and (self.dead or self.in_box):
-                    self.turns[3] = True
-                if level[(self.center_y - margem) // cell_height][self.center_x // cell_width] < 3 \
-                    or level[(self.center_y - margem) // cell_height][self.center_x // cell_width] == 9 and (self.dead or self.in_box):
-                    self.turns[2] = True
-
-                if self.direction == 2 or self.direction == 3:
-                    if 12 <= self.center_x % cell_width <= 18:
-                        if level[(self.center_y + margem) // cell_height][self.center_x // cell_width] < 3 \
-                            or (level[(self.center_y + margem) // cell_height][self.center_x // cell_width] == 9 and (self.dead or self.in_box)):
-                            self.turns[3] = True
-                        if level[(self.center_y - margem) // cell_height][self.center_x // cell_width] < 3 \
-                            or (level[(self.center_y - margem) // cell_height][self.center_x // cell_width] == 9 and (self.dead or self.in_box)):
-                            self.turns[2] = True
-                    if 12 <= self.center_y % cell_height <= 18:
-                        if level[self.center_y // cell_height][(self.center_x - cell_width) // cell_width] < 3 \
-                            or (level[self.center_y // cell_height][(self.center_x - cell_width) // cell_width] == 9 and (self.dead or self.in_box)):
-                            self.turns[1] = True
-                        if level[self.center_y // cell_height][(self.center_x + cell_width) // cell_width] < 3 \
-                            or (level[self.center_y // cell_height][(self.center_x + cell_width) // cell_width] == 9 and (self.dead or self.in_box)):
-                            self.turns[0] = True
-
-                if self.direction == 0 or self.direction == 1:
-                    if 12 <= self.center_x % cell_width <= 18:
-                        if level[(self.center_y + margem) // cell_height][self.center_x // cell_width] < 3 \
-                            or (level[(center_y + margem) // cell_height][self.center_x // cell_width] == 9 and (self.dead or self.in_box)):
-                            self.turns[3] = True
-                        if level[(self.center_y - margem) // cell_height][self.center_x // cell_width] < 3 \
-                            or (level[(self.center_y - margem) // cell_height][self.center_x // cell_width] == 9 and (self.dead or self.in_box)):
-                            self.turns[2] = True
-                    if 12 <= self.center_y % cell_height <= 18:
-                        if level[self.center_y // cell_height][(self.center_x - margem) // cell_width] < 3 \
-                            or (level[self.center_y // cell_height][(self.center_x - margem) // cell_width] == 9 and (self.dead or self.in_box)):
-                            self.turns[1] = True
-                        if level[self.center_y // cell_height][(self.center_x + margem) // cell_width] < 3 \
-                            or (level[self.center_y // cell_height][(self.center_x + margem) // cell_width] == 9 and (self.dead or self.in_box)):
-                            self.turns[0] = True
-            else:
-                self.turns[0] = True
+        cell_height = (HEIGHT - 50) // 32
+        cell_width = (WIDTH // 30)
+        margem = 15
+        self.turns = [False, False, False, False]
+        if 0 < self.center_x // 30 < 29:
+            if level[(self.center_y - margem) // cell_height][self.center_x // cell_width] == 9:
+                self.turns[2] = True
+            if level[self.center_y // cell_height][(self.center_x - margem) // cell_width] < 3 \
+                or level[self.center_y // cell_height][(self.center_x - margem) // cell_width] == 9 and (self.dead or self.in_box):
                 self.turns[1] = True
-            if 350 <= self.x_pos < 550 and 370 < self.y_pos < 480:
-                self.in_box = True
+            if level[self.center_y // cell_height][(self.center_x + margem) // cell_width] < 3 \
+                or level[self.center_y // cell_height][(self.center_x + margem) // cell_width] == 9 and (self.dead or self.in_box):
+                self.turns[0] = True
+            if level[(self.center_y + margem) // cell_height][self.center_x // cell_width] < 3 \
+                or level[(self.center_y + margem) // cell_height][self.center_x // cell_width] == 9 and (self.dead or self.in_box):
+                self.turns[3] = True
+            if level[(self.center_y - margem) // cell_height][self.center_x // cell_width] < 3 \
+                or level[(self.center_y - margem) // cell_height][self.center_x // cell_width] == 9 and (self.dead or self.in_box):
+                self.turns[2] = True
+
+            if self.direction == 2 or self.direction == 3:
+                if 12 <= self.center_x % cell_width <= 18:
+                    if level[(self.center_y + margem) // cell_height][self.center_x // cell_width] < 3 \
+                        or (level[(self.center_y + margem) // cell_height][self.center_x // cell_width] == 9 and (self.dead or self.in_box)):
+                        self.turns[3] = True
+                    if level[(self.center_y - margem) // cell_height][self.center_x // cell_width] < 3 \
+                        or (level[(self.center_y - margem) // cell_height][self.center_x // cell_width] == 9 and (self.dead or self.in_box)):
+                        self.turns[2] = True
+                if 12 <= self.center_y % cell_height <= 18:
+                    if level[self.center_y // cell_height][(self.center_x - cell_width) // cell_width] < 3 \
+                        or (level[self.center_y // cell_height][(self.center_x - cell_width) // cell_width] == 9 and (self.dead or self.in_box)):
+                        self.turns[1] = True
+                    if level[self.center_y // cell_height][(self.center_x + cell_width) // cell_width] < 3 \
+                        or (level[self.center_y // cell_height][(self.center_x + cell_width) // cell_width] == 9 and (self.dead or self.in_box)):
+                        self.turns[0] = True
+
+            if self.direction == 0 or self.direction == 1:
+                if 12 <= self.center_x % cell_width <= 18:
+                    if level[(self.center_y + margem) // cell_height][self.center_x // cell_width] < 3 \
+                        or (level[(center_y + margem) // cell_height][self.center_x // cell_width] == 9 and (self.dead or self.in_box)):
+                        self.turns[3] = True
+                    if level[(self.center_y - margem) // cell_height][self.center_x // cell_width] < 3 \
+                        or (level[(self.center_y - margem) // cell_height][self.center_x // cell_width] == 9 and (self.dead or self.in_box)):
+                        self.turns[2] = True
+                if 12 <= self.center_y % cell_height <= 18:
+                    if level[self.center_y // cell_height][(self.center_x - margem) // cell_width] < 3 \
+                        or (level[self.center_y // cell_height][(self.center_x - margem) // cell_width] == 9 and (self.dead or self.in_box)):
+                        self.turns[1] = True
+                    if level[self.center_y // cell_height][(self.center_x + margem) // cell_width] < 3 \
+                        or (level[self.center_y // cell_height][(self.center_x + margem) // cell_width] == 9 and (self.dead or self.in_box)):
+                        self.turns[0] = True
+        else:
+            self.turns[0] = True
+            self.turns[1] = True
+        if 350 <= self.x_pos < 550 and 370 < self.y_pos < 480:
+            self.in_box = True
+        else:
+            self.in_box = False
+        return self.turns, self.in_box
+
+    def move(self):
+        while self.running:
+            time.sleep(0.01)
+            try:
+                with inimigo_lock:
+                    if not moving and game_over and game_won:
+                        continue
+
+                    self.check_collisions()
+                    self.update_position()
+                    self.update_target()
+            except Exception as e:
+                print(f'erro na thread do inimigo {self.id}: {e}')
+
+    def update_target(self):
+        if powerup:
+            if not self.dead and not eaten_inimigo[self.id]:
+                self.target = (900 if player_x < 450 else 0, 900 if player_y < 450 else 0)
+            elif not self.dead and eaten_inimigo[self.id]:
+                self.target = (300, 400)
             else:
-                self.in_box = False
-            return self.turns, self.in_box
+                self.target = (player_x, player_y)
+
+    def update_position(self):
+        if self.id == 0:
+            self.x_pos, self.y_pos, self.direction = self.move_nuvem()
+        elif self.id == 1:
+            self.x_pos, self.y_pos, self.direction = self.move_redes()
+        elif self.id == 2:
+            self.x_pos, self.y_pos, self.direction = self.move_computacional()
+        elif self.id == 3:
+            self.x_pos, self.y_pos, self.direction = self.move_operacional()
 
     def move_operacional(self): # vira sempre que for vantajoso para perseguição
         #semáforo
@@ -718,6 +745,8 @@ class Inimigo:
                 self.x_pos -= 30
             return self.x_pos, self.y_pos, self.direction
 
+
+
 def draw_alter():
     score_text = font.render(f'Score: {score}', True, 'white')
     screen.blit(score_text, (10, 720))
@@ -737,19 +766,20 @@ def draw_alter():
         screen.blit(gameover_text, (100, 300))
 
 def check_collisions(scor, power, power_count, eaten_inimigo):
-    cell_height = (HEIGHT - 50)  // 32
-    cell_widht = WIDTH // 30
-    if 0 < player_x < 870:
-        if level[center_y // cell_height][center_x // cell_widht] == 1:
-            level[center_y // cell_height][center_x // cell_widht] = 0
-            scor += 10
-        if level[center_y // cell_height][center_x // cell_widht] == 2:
-            level[center_y // cell_height][center_x // cell_widht] = 0
-            scor += 50
-            power = True
-            power_count = 0
-            eaten_inimigo = [False, False, False, False]
-    return scor, power, power_count, eaten_inimigo
+    with inimigo_lock:
+        cell_height = (HEIGHT - 50)  // 32
+        cell_widht = WIDTH // 30
+        if 0 < player_x < 870:
+            if level[center_y // cell_height][center_x // cell_widht] == 1:
+                level[center_y // cell_height][center_x // cell_widht] = 0
+                scor += 10
+            if level[center_y // cell_height][center_x // cell_widht] == 2:
+                level[center_y // cell_height][center_x // cell_widht] = 0
+                scor += 50
+                power = True
+                power_count = 0
+                eaten_inimigo = [False, False, False, False]
+        return scor, power, power_count, eaten_inimigo
 
 def draw_board(level):
     num1 = ((HEIGHT - 50) // 32)
@@ -884,30 +914,6 @@ def check_position(centerx, centery):
             if level[centery // cell_height][(centerx - margem) // cell_width] < 3:
                 turns[1] = True  # Pode ir para esquerda
 
-
-        #if direction == 2 or direction == 3:
-         #   if 12 <= centerx % n2 <= 18:
-          #      if level[(centery + n3) // n1][centerx // n2] < 3:
-           #         turns[3] = True
-            #    if level[(centery - n3) // n1][centerx // n2] < 3:
-             #       turns[2] = True
-            #if 12 <= centery % n1 <= 18:
-             #   if level[centery // n1][(centerx - n2) // n2] < 3:
-              #      turns[1] = True
-               # if level[centery // n1][(centerx + n2) // n2] < 3:
-                #    turns[0] = True
-
-      #  if direction == 0 or direction == 1:
-       #     if 12 <= centerx % n2 <= 18:
-        #        if level[(centery + n1) // n1][centerx // n2] < 3:
-         #           turns[3] = True
-          #      if level[(centery - n1) // n1][centerx // n2] < 3:
-           #         turns[2] = True
-            #if 12 <= centery % n1 <= 18:
-             #   if level[centery // n1][(centerx - n3) // n2] < 3:
-              #      turns[1] = True
-               # if level[centery // n1][(centerx + n3) // n2] < 3:
-                #    turns[0] = True
     else:
         turns[0] = True
         turns[1] = True
@@ -930,88 +936,50 @@ def move_player(play_x, play_y):
 
     return play_x, play_y
 
-def get_targets(opera_x, opera_y, compu_x, compu_y, nuve_x, nuve_y, rede_x, rede_y):
-    runaway_x = 900 if player_x < 450 else 0
-    runaway_y = 900 if player_y < 450 else 0
-    return_target = (380, 400)
-    if powerup:
-        if not nuvem.dead and not eaten_inimigo[0]:
-            nuve_target = (runaway_x, runaway_y)
-        elif not nuvem.dead and eaten_inimigo[0]:
-            if 340 < nuve_x < 560 and 340 < nuve_y < 500:
-                nuve_target = (400, 100)
+def get_targets():
+    with inimigo_lock:
+        runaway_x = 900 if player_x < 450 else 0
+        runaway_y = 900 if player_y < 450 else 0
+        return_target = (380, 400)
+        targets = []
+        for inimigo in [nuvem, redes, computacional, operacional]:
+            if powerup:
+                if not inimigo.dead and not eaten_inimigo[inimigo.id]:
+                   if inimigo.id == 0:
+                       targets.append((runaway_x, runaway_y))
+                   elif inimigo.id == 1:
+                        targets.append((runaway_x, player_y))
+                   elif inimigo.id == 2:
+                       targets.append((player_x, runaway_y))
+                   elif inimigo.id == 3:
+                       targets.append((450, 450))
+                elif not inimigo.dead and eaten_inimigo[inimigo.id]:
+                    if 340 < inimigo.x_pos < 560 and 340 < inimigo.y_pos < 500:
+                        targets.append((400, 100))
+                    else:
+                        targets.append((player_x, player_y))
+                else:
+                    targets.append(return_target)
             else:
-                nuve_target = (player_x, player_y)
-        else:
-            nuve_target = return_target
-        if not redes.dead and not eaten_inimigo[1]:
-            rede_target = (runaway_x, player_y)
-        elif not redes.dead and eaten_inimigo[1]:
-            if 340 < rede_x < 560 and 340 < rede_y < 500:
-                rede_target = (400, 100)
-            else:
-                rede_target = (player_x, player_y)
-        else:
-            rede_target = return_target
-        if not operacional.dead and not eaten_inimigo[2]:
-            opera_target = (player_x, runaway_y)
-        elif not operacional.dead and eaten_inimigo[2]:
-            if 340 < opera_x < 560 and 340 < opera_y < 500:
-                opera_target = (400, 100)
-            else:
-                opera_target = (player_x, player_y)
-        else:
-            opera_target = return_target
-        if not computacional.dead and not eaten_inimigo[3]:
-            compu_target = (450, 450)
-        elif not computacional.dead and eaten_inimigo[3]:
-            if 340 < compu_x < 560 and 340 < compu_y < 500:
-                compu_target = (400, 100)
-            else:
-                compu_target = (player_x, player_y)
-        else:
-            compu_target = return_target
-    else:
-        if not nuvem.dead:
-            if 340 < nuve_x < 560 and 340 < nuve_y < 500: # está na caixa
-                nuve_target = (400, 100)
-            else:
-                nuve_target = (player_x, player_y)
-        else:
-            nuve_target = return_target
-        if not redes.dead:
-            if 340 < rede_x < 560 and 340 < rede_y < 500:
-                rede_target = (400, 100)
-            else:
-                rede_target = (player_x, player_y)
-        else:
-            rede_target = return_target
-        if not operacional.dead:
-            if 340 < opera_x < 560 and 340 < opera_y < 500:
-                opera_target = (400, 100)
-            else:
-                opera_target = (player_x, player_y)
-        else:
-            opera_target = return_target
-        if not computacional.dead:
-            if 340 < compu_x < 560 and 340 < compu_y < 500:
-                compu_target = (400, 100)
-            else:
-                compu_target = (player_x, player_y)
-        else:
-            compu_target = return_target
+                if not inimigo.dead:
+                    if 340 < inimigo.x_pos < 560 and 340 < inimigo.y_pos < 500:
+                        targets.append((400, 100))
+                    else:
+                        targets.append((player_x, player_y))
+                else:
+                    targets.append((return_target))
+        return targets
 
-    return [nuve_target, rede_target, opera_target, compu_target]
+
+nuvem = Inimigo(56, 58 , targets[0], inimigo_speeds[0], nuvem_img, 0, False, False, 0)
+redes = Inimigo(400, 438, targets[1], inimigo_speeds[1], redes_img, 1, False, False, 1)
+computacional = Inimigo(400, 438, targets[2], inimigo_speeds[2], computacional_img, 2, False, False, 2)
+operacional = Inimigo(400, 438, targets[3], inimigo_speeds[3], operacional_img, 3, False, False, 3)
 
 run = True
 
-#nuvem = Inimigo(nuvem_x, nuvem_y, targets[0], inimigo_speeds[0], nuvem_img, nuvem_direction, nuvem_dead, nuvem_box, 0)
-#redes = Inimigo(redes_x, redes_y, targets[1], inimigo_speeds[1], redes_img, redes_direction, redes_dead, redes_box, 1)
-#computacional = Inimigo(computacional_x, computacional_y, targets[2], inimigo_speeds[2], computacional_img, computacional_direction, computacional_dead, computacional_box, 2)
-#operacional = Inimigo(operacional_x, operacional_y, targets[3], inimigo_speeds[3], operacional_img, operacional_direction, operacional_dead, operacional_box, 3)
-
 while run:
-    timer.tick(fpd)
+    timer.tick(fps)
     if counter < 19:
         counter += 1
         if counter > 2:
@@ -1035,6 +1003,8 @@ while run:
     draw_board(level)
     center_x = player_x + 25
     center_y = player_y + 25
+
+
     if powerup:
         inimigo_speeds = [1, 1, 1, 1]
     else:
@@ -1047,13 +1017,13 @@ while run:
         inimigo_speeds[2] = 2
     if eaten_inimigo[3]:
         inimigo_speeds[3] = 2
-    if nuvem_dead:
-        inimigo_speeds[0] = 4
-    if redes_dead:
-        inimigo_speeds[1] = 4
-    if computacional_dead:
-        inimigo_speeds[2] = 4
-    if operacional_dead:
+    #if nuvem_dead:
+     #   inimigo_speeds[0] = 4
+    #if redes_dead:
+     #   inimigo_speeds[1] = 4
+    #if computacional_dead:
+     #   inimigo_speeds[2] = 4
+    #if operacional_dead:
         inimigo_speeds[3] = 4
 
     game_won = True
@@ -1064,35 +1034,20 @@ while run:
     player_circle = pygame.draw.circle(screen, 'black', (center_x, center_y), 21, 2)
     draw_player()
 
-    nuvem = Inimigo(nuvem_x, nuvem_y, targets[0], inimigo_speeds[0], nuvem_img, nuvem_direction, nuvem_dead, nuvem_box, 0)
-    redes = Inimigo(redes_x, redes_y, targets[1], inimigo_speeds[1], redes_img, redes_direction, redes_dead, redes_box, 1)
-    computacional = Inimigo(computacional_x, computacional_y, targets[2], inimigo_speeds[2], computacional_img, computacional_direction, computacional_dead, computacional_box, 2)
-    operacional = Inimigo(operacional_x, operacional_y, targets[3], inimigo_speeds[3], operacional_img, operacional_direction, operacional_dead, operacional_box, 3)
-    '''with inimigo_lock:
+
+    with inimigo_lock:
         nuvem.rect = nuvem.draw()
         redes.rect = redes.draw()
         computacional.rect = computacional.draw()
-        operacional.rect = operacional.draw()'''
+        operacional.rect = operacional.draw()
 
     draw_alter()
-    targets = get_targets(operacional_x, operacional_y, computacional_x, computacional_y, nuvem_x, nuvem_y, redes_x, redes_y)
+    targets = get_targets()
     turns_allowed = check_position(center_x, center_y)
+
     if moving:
         player_x, player_y = move_player(player_x, player_y)
-        if not nuvem_dead and not nuvem.in_box:
-            nuvem_x, nuvem_y, nuvem_direction = nuvem.move_nuvem()
-        else:
-            nuvem_x, nuvem_y, nuvem_direction = nuvem.move_operacional()
-        if not redes_dead and not redes.in_box:
-            redes_x, redes_y, redes_direction = redes.move_redes()
-        else:
-            redes_x, redes_y, redes_direction = redes.move_operacional()
-        if not computacional_dead and not computacional.in_box:
-            computacional_x, computacional_y, computacional_direction = computacional.move_computacional()
-        else:
-            computacional_x, computacional_y, computacional_direction = computacional.move_operacional()
 
-        operacional_x, operacional_y, operacional_direction = operacional.move_operacional()
     score, powerup, powerup_count, eaten_inimigo = check_collisions(score, powerup, powerup_count, eaten_inimigo)
 
     if not powerup:
@@ -1106,267 +1061,45 @@ while run:
                 player_y = 663
                 direction = 0
                 direction_command = 0
-                nuvem_x = 56
-                nuvem_y = 58
-                nuvem_direction = 0
-                redes_x = 400
-                redes_y = 438
-                redes_direction = 2
-                computacional_x = 440
-                computacional_y = 438
-                computacional_direction = 2
-                operacional_x = 440
-                operacional_y = 438
-                operacional_direction = 2
+                nuvem.x_pos = 56
+                nuvem.y_pos = 58
+                nuvem.direction = 0
+                redes.x_pos = 400
+                redes.y_pos = 438
+                redes.direction = 2
+                computacional.x_pos = 440
+                computacional.y_pos = 438
+                computacional.direction = 2
+                operacional.x_pos = 440
+                operacional.y_pos = 438
+                operacional.direction = 2
                 eaten_inimigo = [False, False, False, False]
-                nuvem_dead = False
-                redes_dead = False
-                computacional_dead = False
-                operacional_dead = False
+                nuvem.dead = False
+                redes.dead = False
+                computacional.dead = False
+                operacional.dead = False
             else:
                 game_over = True
                 moving = False
                 startup_counter = 0
-    if powerup and (player_circle.colliderect(nuvem.rect) and eaten_inimigo[0]) and not nuvem.dead:
-        if lives > 0:
-            lives -= 1
-            startup_counter = 0
-            powerup = False
-            powerup_count = 0
-            player_x = 450
-            player_y = 663
-            direction = 0
-            direction_command = 0
-            nuvem_x = 56
-            nuvem_y = 58
-            nuvem_direction = 0
-            redes_x = 400
-            redes_y = 438
-            redes_direction = 2
-            computacional_x = 440
-            computacional_y = 438
-            computacional_direction = 2
-            operacional_x = 440
-            operacional_y = 438
-            operacional_direction = 2
-            eaten_inimigo = [False, False, False, False]
-            nuvem_dead = False
-            redes_dead = False
-            computacional_dead = False
-            operacional_dead = False
-            if powerup and (player_circle.colliderect(nuvem.rect) and eaten_inimigo[0]):
-                if lives > 0:
-                    lives -= 1
-                    startup_counter = 0
-                    player_x = 450
-                    player_y = 663
-                    direction = 0
-                    direction_command = 0
-                    nuvem_x = 56
-                    nuvem_y = 58
-                    nuvem_direction = 0
-                    redes_x = 400
-                    redes_y = 438
-                    redes_direction = 2
-                    computacional_x = 440
-                    computacional_y = 438
-                    computacional_direction = 2
-                    operacional_x = 440
-                    operacional_y = 438
-                    operacional_direction = 2
-                    eaten_inimigo = [False, False, False, False]
-                    nuvem_dead = False
-                    redes_dead = False
-                    computacional_dead = False
-                    operacional_dead = False
-        else:
-            game_over = True
-            moving = False
-            startup_counter = 0
-    if powerup and (player_circle.colliderect(redes.rect) and eaten_inimigo[1] and not redes.dead):
-        if lives > 0:
-            lives -= 1
-            startup_counter = 0
-            powerup = False
-            powerup_count = 0
-            player_x = 450
-            player_y = 663
-            direction = 0
-            direction_command = 0
-            nuvem_x = 56
-            nuvem_y = 58
-            nuvem_direction = 0
-            redes_x = 400
-            redes_y = 438
-            redes_direction = 2
-            computacional_x = 440
-            computacional_y = 438
-            computacional_direction = 2
-            operacional_x = 440
-            operacional_y = 438
-            operacional_direction = 2
-            eaten_inimigo = [False, False, False, False]
-            nuvem_dead = False
-            redes_dead = False
-            computacional_dead = False
-            operacional_dead = False
-            if powerup and (player_circle.colliderect(nuvem.rect) and eaten_inimigo[0]):
-                if lives > 0:
-                    lives -= 1
-                    startup_counter = 0
-                    player_x = 450
-                    player_y = 663
-                    direction = 0
-                    direction_command = 0
-                    nuvem_x = 56
-                    nuvem_y = 58
-                    nuvem_direction = 0
-                    redes_x = 400
-                    redes_y = 438
-                    redes_direction = 2
-                    computacional_x = 440
-                    computacional_y = 438
-                    computacional_direction = 2
-                    operacional_x = 440
-                    operacional_y = 438
-                    operacional_direction = 2
-                    eaten_inimigo = [False, False, False, False]
-                    nuvem_dead = False
-                    redes_dead = False
-                    computacional_dead = False
-                    operacional_dead = False
-        else:
-            game_over = True
-            moving = False
-            startup_counter = 0
-    if powerup and (player_circle.colliderect(computacional.rect) and eaten_inimigo[2] and not computacional.dead):
-        if lives > 0:
-            lives -= 1
-            startup_counter = 0
-            powerup = False
-            powerup_count = 0
-            player_x = 450
-            player_y = 663
-            direction = 0
-            direction_command = 0
-            nuvem_x = 56
-            nuvem_y = 58
-            nuvem_direction = 0
-            redes_x = 400
-            redes_y = 438
-            redes_direction = 2
-            computacional_x = 440
-            computacional_y = 438
-            computacional_direction = 2
-            operacional_x = 440
-            operacional_y = 438
-            operacional_direction = 2
-            eaten_inimigo = [False, False, False, False]
-            nuvem_dead = False
-            redes_dead = False
-            computacional_dead = False
-            operacional_dead = False
-            if powerup and (player_circle.colliderect(nuvem.rect) and eaten_inimigo[0]):
-                if lives > 0:
-                    lives -= 1
-                    startup_counter = 0
-                    player_x = 450
-                    player_y = 663
-                    direction = 0
-                    direction_command = 0
-                    nuvem_x = 56
-                    nuvem_y = 58
-                    nuvem_direction = 0
-                    redes_x = 400
-                    redes_y = 438
-                    redes_direction = 2
-                    computacional_x = 440
-                    computacional_y = 438
-                    computacional_direction = 2
-                    operacional_x = 440
-                    operacional_y = 438
-                    operacional_direction = 2
-                    eaten_inimigo = [False, False, False, False]
-                    nuvem_dead = False
-                    redes_dead = False
-                    computacional_dead = False
-                    operacional_dead = False
-        else:
-            game_over = True
-            moving = False
-            startup_counter = 0
-    if powerup and (player_circle.colliderect(operacional.rect) and eaten_inimigo[3] and not operacional.dead):
-        if lives > 0:
-            lives -= 1
-            startup_counter = 0
-            powerup = False
-            powerup_count = 0
-            player_x = 450
-            player_y = 663
-            direction = 0
-            direction_command = 0
-            nuvem_x = 56
-            nuvem_y = 58
-            nuvem_direction = 0
-            redes_x = 400
-            redes_y = 438
-            redes_direction = 2
-            computacional_x = 440
-            computacional_y = 438
-            computacional_direction = 2
-            operacional_x = 440
-            operacional_y = 438
-            operacional_direction = 2
-            eaten_inimigo = [False, False, False, False]
-            nuvem_dead = False
-            redes_dead = False
-            computacional_dead = False
-            operacional_dead = False
-            if powerup and (player_circle.colliderect(nuvem.rect) and eaten_inimigo[0]):
-                if lives > 0:
-                    lives -= 1
-                    startup_counter = 0
-                    player_x = 450
-                    player_y = 663
-                    direction = 0
-                    direction_command = 0
-                    nuvem_x = 56
-                    nuvem_y = 58
-                    nuvem_direction = 0
-                    redes_x = 400
-                    redes_y = 438
-                    redes_direction = 2
-                    computacional_x = 440
-                    computacional_y = 438
-                    computacional_direction = 2
-                    operacional_x = 440
-                    operacional_y = 438
-                    operacional_direction = 2
-                    eaten_inimigo = [False, False, False, False]
-                    nuvem_dead = False
-                    redes_dead = False
-                    computacional_dead = False
-                    operacional_dead = False
-        else:
-            game_over = True
-            moving = False
-            startup_counter = 0
-    if powerup and player_circle.colliderect(nuvem.rect) and not nuvem.dead and not eaten_inimigo[0]:
-        nuvem_dead = True
-        eaten_inimigo[0] = True
-        score += (2 * eaten_inimigo.count(True)) * 100
-    if powerup and player_circle.colliderect(redes.rect) and not redes.dead and not eaten_inimigo[1]:
-        redes_dead = True
-        eaten_inimigo[1] = True
-        score += (2 * eaten_inimigo.count(True)) * 100
-    if powerup and player_circle.colliderect(computacional.rect) and not computacional.dead and not eaten_inimigo[2]:
-        computacional_dead = True
-        eaten_inimigo[2] = True
-        score += (2 * eaten_inimigo.count(True)) * 100
-    if powerup and player_circle.colliderect(operacional.rect) and not operacional.dead and not eaten_inimigo[3]:
-        operacional_dead = True
-        eaten_inimigo[3] = True
-        score += (2 * eaten_inimigo.count(True)) * 100
+
+    if powerup:
+        if player_circle.colliderect(nuvem.rect) and not nuvem.dead and not eaten_inimigo[0]:
+            nuvem.dead = True
+            eaten_inimigo[0] = True
+            score = (2 * eaten_inimigo.count(True)) * 100
+        if player_circle.colliderect(nuvem.rect) and not nuvem.dead and not eaten_inimigo[1]:
+            nuvem.dead = True
+            eaten_inimigo[1] = True
+            score = (2 * eaten_inimigo.count(True)) * 100
+        if player_circle.colliderect(nuvem.rect) and not nuvem.dead and not eaten_inimigo[2]:
+            nuvem.dead = True
+            eaten_inimigo[2] = True
+            score = (2 * eaten_inimigo.count(True)) * 100
+        if player_circle.colliderect(nuvem.rect) and not nuvem.dead and not eaten_inimigo[3]:
+            nuvem.dead = True
+            eaten_inimigo[3] = True
+            score = (2 * eaten_inimigo.count(True)) * 100
 
 
     for event in pygame.event.get():
@@ -1395,23 +1128,23 @@ while run:
                 player_y = 663
                 direction = 0
                 direction_command = 0
-                nuvem_x = 56
-                nuvem_y = 58
-                nuvem_direction = 0
-                redes_x = 400
-                redes_y = 438
-                redes_direction = 2
-                computacional_x = 440
-                computacional_y = 438
-                computacional_direction = 2
-                operacional_x = 440
-                operacional_y = 438
-                operacional_direction = 2
+                nuvem.x_pos = 56
+                nuvem.y_pos = 58
+                nuvem.direction = 0
+                redes.x_pos = 400
+                redes.y_pos = 438
+                redes.direction = 2
+                computacional.x_pos = 440
+                computacional.y_pos = 438
+                computacional.direction = 2
+                operacional.x_pos = 440
+                operacional.y_pos = 438
+                operacional.direction = 2
                 eaten_inimigo = [False, False, False, False]
-                nuvem_dead = False
-                redes_dead = False
-                computacional_dead = False
-                operacional_dead = False
+                nuvem.dead = False
+                redes.dead = False
+                computacional.dead = False
+                operacional.dead = False
                 score = 0
                 lives = 3
                 level = copy.deepcopy(boards)
@@ -1437,19 +1170,16 @@ while run:
         player_x = 45
     elif player_x < 0:
         player_x = WIDTH - 45
-
-    if  nuvem.in_box and nuvem_dead:
-        nuvem_dead = False
-    if  redes.in_box and redes_dead:
-        redes_dead = False
-    if  operacional.in_box and operacional_dead:
-        operacional_dead = False
-    if  computacional.in_box and computacional_dead:
-        computacional_dead = False
     pygame.display.flip()
 
-#nuvem.thread.join()
-#redes.thread.join()
-#computacional.thread.join()
-#operacional.thread.join()
+nuvem.running = False
+redes.running = False
+computacional.running = False
+operacional.running = False
+
+nuvem.thread.join()
+redes.thread.join()
+computacional.thread.join()
+operacional.thread.join()
+
 pygame.quit()
