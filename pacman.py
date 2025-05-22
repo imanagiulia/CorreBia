@@ -89,7 +89,7 @@ class Inimigo:
         self.y_pos = y_coord
         self.center_x = self.x_pos + 22
         self.center_y = self.y_pos + 22
-        self.target = target
+        self.target = (0,0)
         self.speed = speed
         self.img = img
         self.direction = direction
@@ -217,24 +217,22 @@ class Inimigo:
         while self.running:
             time.sleep(0.01)
             try:
-                with inimigo_lock:
-                    if not moving and game_over and game_won:
-                        continue
+                #with inimigo_lock:
+                if not moving or game_over or game_won:
+                    continue
 
-                    self.check_collisions()
-                    self.update_position()
-                    self.update_target()
+                self.check_collisions()
+                self.update_target()
+                self.update_position()
+                print(
+                    f"Inimigo {self.id} - pos: ({self.x_pos:.1f}, {self.y_pos:.1f}) dir: {self.direction} target: {self.target}")
+
             except Exception as e:
                 print(f'erro na thread do inimigo {self.id}: {e}')
 
     def update_target(self):
-        if powerup:
-            if not self.dead and not eaten_inimigo[self.id]:
-                self.target = (900 if player_x < 450 else 0, 900 if player_y < 450 else 0)
-            elif not self.dead and eaten_inimigo[self.id]:
-                self.target = (300, 400)
-            else:
-                self.target = (player_x, player_y)
+        self.target = targets[self.id]
+        print(f"Inimigo {self.id} target atualizado para {self.target}")
 
     def update_position(self):
         if self.id == 0:
@@ -383,113 +381,46 @@ class Inimigo:
                 self.x_pos = 900
             elif self.x_pos > 900:
                 self.x_pos -= 30
+
+            self.x_pos = max(-30, min(self.x_pos, WIDTH + 30))
+            self.y_pos = max(-30, min(self.y_pos, HEIGHT + 30))
+
             return self.x_pos, self.y_pos, self.direction
 
     def move_nuvem(self): # vira sempre que colidir com paredes, caso contrário continua reto
-        #semáforo
-        with inimigo_lock: # D, E, C, B
-            if self.direction == 0:
-                if self.target[0] > self.x_pos and self.turns[0]:
-                    self.x_pos += self.speed
-                elif not self.turns[0]:
-                    if self.target[1] > self.y_pos and self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.target[1] < self.y_pos and self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.target[0] < self.x_pos and self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    elif self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                elif self.turns[0]:
-                    self.x_pos += self.speed
-            elif self.direction == 1:
-                if self.target[0] < self.x_pos and self.turns[1]:
-                    self.x_pos -= self.speed
-                elif not self.turns[1]:
-                    if self.target[1] > self.y_pos and self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.target[1] < self.y_pos and self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.target[0] > self.x_pos and self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                    elif self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                elif self.turns[1]:
-                        self.x_pos -= self.speed
-            elif self.direction == 2:
-                if self.target[1] < self.y_pos and self.turns[2]:
-                    self.direction = 2
-                    self.y_pos -= self.speed
-                elif not self.turns[2]:
-                    if self.target[0] > self.x_pos and self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                    elif self.target[0] < self.x_pos and self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    elif self.target[1] > self.y_pos and self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                    elif self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                elif self.turns[2]:
-                    self.y_pos -= self.speed
-            elif self.direction == 3:
-                if self.target[1] > self.y_pos and self.turns[3]:
-                    self.y_pos += self.speed
-                elif not self.turns[3]:
-                    if self.target[0] > self.x_pos and self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                    elif self.target[0] < self.x_pos and self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    elif self.target[1] < self.y_pos and self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                    elif self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                elif self.turns[3]:
-                    self.y_pos += self.speed
-            if self.x_pos < -30:
-                self.x_pos = 900
-            elif self.x_pos > 900:
-                self.x_pos -= 30
-            return self.x_pos, self.y_pos, self.direction
+     # D, E, C, B
+     if self.direction == 0 and self.turns[0]:  # direita
+         self.x_pos += self.speed
+     elif self.direction == 1 and self.turns[1]:  # esquerda
+         self.x_pos -= self.speed
+     elif self.direction == 2 and self.turns[2]:  # cima
+         self.y_pos -= self.speed
+     elif self.direction == 3 and self.turns[3]:  # baixo
+         self.y_pos += self.speed
+     else:
+         # Colidiu com parede — precisa virar
+         for i in range(4):  # direita, esquerda, cima, baixo
+             if self.turns[i]:
+                 self.direction = i
+                 break
+
+         # Após mudar a direção, aplica movimento
+         if self.direction == 0 and self.turns[0]:
+             self.x_pos += self.speed
+         elif self.direction == 1 and self.turns[1]:
+             self.x_pos -= self.speed
+         elif self.direction == 2 and self.turns[2]:
+             self.y_pos -= self.speed
+         elif self.direction == 3 and self.turns[3]:
+             self.y_pos += self.speed
+
+         # Teleporte horizontal (túnel)
+     if self.x_pos < -30:
+         self.x_pos = 900
+     elif self.x_pos > 900:
+         self.x_pos -= 30
+
+     return self.x_pos, self.y_pos, self.direction
 
     def move_redes(self): # vira para cima ou para baixo qualquer momento para perseguir, mas para esquerda ou para direita somente em colisões
         #semáforo
@@ -942,6 +873,7 @@ def get_targets():
         runaway_y = 900 if player_y < 450 else 0
         return_target = (380, 400)
         targets = []
+
         for inimigo in [nuvem, redes, computacional, operacional]:
             if powerup:
                 if not inimigo.dead and not eaten_inimigo[inimigo.id]:
@@ -962,12 +894,24 @@ def get_targets():
                     targets.append(return_target)
             else:
                 if not inimigo.dead:
-                    if 340 < inimigo.x_pos < 560 and 340 < inimigo.y_pos < 500:
-                        targets.append((400, 100))
-                    else:
+                    if inimigo.id == 0:
                         targets.append((player_x, player_y))
-                else:
-                    targets.append((return_target))
+                    elif inimigo.id == 1:
+                        targets.append((
+                            min(max(0, player_x), WIDTH - 50),
+                            min(max(0, player_y - 100), HEIGHT - 100)
+                        ))
+                    elif inimigo.id == 2:
+                        targets.append((
+                            min(max(0, player_x + 100), WIDTH - 50),
+                            min(max(0, player_y), HEIGHT - 100)
+                        ))
+                    elif inimigo.id == 3:
+                        targets.append((
+                            min(max(0, player_x - 100), WIDTH - 50),
+                            min(max(0, player_y), HEIGHT - 100)
+                        ))
+
         return targets
 
 
@@ -993,7 +937,7 @@ while run:
         powerup_count = 0
         powerup = False
         eaten_inimigo = [False, False, False, False]
-    if startup_counter  < 180 and not game_over and not game_won:
+    if startup_counter  < 30 and not game_over and not game_won:
         moving = False
         startup_counter += 1
     else:
@@ -1004,6 +948,8 @@ while run:
     center_x = player_x + 25
     center_y = player_y + 25
 
+    targets = get_targets()
+    turns_allowed = check_position(center_x, center_y)
 
     if powerup:
         inimigo_speeds = [1, 1, 1, 1]
@@ -1028,7 +974,7 @@ while run:
 
     game_won = True
     for i in range(len(level)):
-        if 1 in level[i] or 2 in level[1]:
+        if 1 in level[i] or 2 in level[i]:
             game_won = False
 
     player_circle = pygame.draw.circle(screen, 'black', (center_x, center_y), 21, 2)
@@ -1042,8 +988,6 @@ while run:
         operacional.rect = operacional.draw()
 
     draw_alter()
-    targets = get_targets()
-    turns_allowed = check_position(center_x, center_y)
 
     if moving:
         player_x, player_y = move_player(player_x, player_y)
@@ -1087,19 +1031,19 @@ while run:
         if player_circle.colliderect(nuvem.rect) and not nuvem.dead and not eaten_inimigo[0]:
             nuvem.dead = True
             eaten_inimigo[0] = True
-            score = (2 * eaten_inimigo.count(True)) * 100
-        if player_circle.colliderect(nuvem.rect) and not nuvem.dead and not eaten_inimigo[1]:
+            score += (2 * eaten_inimigo.count(True)) * 100
+        if player_circle.colliderect(redes.rect) and not nuvem.dead and not eaten_inimigo[1]:
             nuvem.dead = True
             eaten_inimigo[1] = True
-            score = (2 * eaten_inimigo.count(True)) * 100
-        if player_circle.colliderect(nuvem.rect) and not nuvem.dead and not eaten_inimigo[2]:
+            score += (2 * eaten_inimigo.count(True)) * 100
+        if player_circle.colliderect(computacional.rect) and not nuvem.dead and not eaten_inimigo[2]:
             nuvem.dead = True
             eaten_inimigo[2] = True
-            score = (2 * eaten_inimigo.count(True)) * 100
-        if player_circle.colliderect(nuvem.rect) and not nuvem.dead and not eaten_inimigo[3]:
+            score += (2 * eaten_inimigo.count(True)) * 100
+        if player_circle.colliderect(operacional.rect) and not nuvem.dead and not eaten_inimigo[3]:
             nuvem.dead = True
             eaten_inimigo[3] = True
-            score = (2 * eaten_inimigo.count(True)) * 100
+            score += (2 * eaten_inimigo.count(True)) * 100
 
 
     for event in pygame.event.get():
