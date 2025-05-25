@@ -152,57 +152,58 @@ class Inimigo:
 
 
     def check_collisions(self): # D, E, C, B
-        # semáforo
         cell_height = (HEIGHT - 50) // 32
         cell_width = (WIDTH // 30)
         margem = 15
-        self.turns = [False, False, False, False]
+        #linha = max(0, min((self.center_y) // cell_height, len(level) - 1))
+        #coluna = max(0, min((self.center_x) // cell_width, len(level[0]) - 1))
+        '''self.turns = [False, False, False, False]
         if 0 < self.center_x // 30 < 29:
-            if level[(self.center_y - margem) // cell_height][self.center_x // cell_width] == 9:
+            if level[linha][coluna] == 9:
                 self.turns[2] = True
-            if level[self.center_y // cell_height][(self.center_x - margem) // cell_width] < 3 \
-                or level[self.center_y // cell_height][(self.center_x - margem) // cell_width] == 9 and (self.dead or self.in_box):
+            if level[linha][coluna] < 3 \
+                or level[linha][coluna] == 9 and (self.dead or self.in_box):
                 self.turns[1] = True
-            if level[self.center_y // cell_height][(self.center_x + margem) // cell_width] < 3 \
-                or level[self.center_y // cell_height][(self.center_x + margem) // cell_width] == 9 and (self.dead or self.in_box):
+            if level[linha][coluna] < 3 \
+                or level[linha][coluna] == 9 and (self.dead or self.in_box):
                 self.turns[0] = True
-            if level[(self.center_y + margem) // cell_height][self.center_x // cell_width] < 3 \
-                or level[(self.center_y + margem) // cell_height][self.center_x // cell_width] == 9 and (self.dead or self.in_box):
+            if level[linha][coluna] < 3 \
+                or level[linha][coluna] == 9 and (self.dead or self.in_box):
                 self.turns[3] = True
-            if level[(self.center_y - margem) // cell_height][self.center_x // cell_width] < 3 \
-                or level[(self.center_y - margem) // cell_height][self.center_x // cell_width] == 9 and (self.dead or self.in_box):
+            if level[linha][coluna] < 3 \
+                or level[linha][coluna] == 9 and (self.dead or self.in_box):
                 self.turns[2] = True
 
             if self.direction == 2 or self.direction == 3:
                 if 12 <= self.center_x % cell_width <= 18:
-                    if level[(self.center_y + margem) // cell_height][self.center_x // cell_width] < 3 \
-                        or (level[(self.center_y + margem) // cell_height][self.center_x // cell_width] == 9 and (self.dead or self.in_box)):
+                    if level[linha][coluna] < 3 \
+                        or (level[linha][coluna] == 9 and (self.dead or self.in_box)):
                         self.turns[3] = True
-                    if level[(self.center_y - margem) // cell_height][self.center_x // cell_width] < 3 \
-                        or (level[(self.center_y - margem) // cell_height][self.center_x // cell_width] == 9 and (self.dead or self.in_box)):
+                    if level[linha][coluna] < 3 \
+                        or (level[linha][coluna] == 9 and (self.dead or self.in_box)):
                         self.turns[2] = True
                 if 12 <= self.center_y % cell_height <= 18:
-                    if level[self.center_y // cell_height][(self.center_x - cell_width) // cell_width] < 3 \
-                        or (level[self.center_y // cell_height][(self.center_x - cell_width) // cell_width] == 9 and (self.dead or self.in_box)):
+                    if level[linha][coluna] < 3 \
+                        or (level[linha][coluna] == 9 and (self.dead or self.in_box)):
                         self.turns[1] = True
-                    if level[self.center_y // cell_height][(self.center_x + cell_width) // cell_width] < 3 \
-                        or (level[self.center_y // cell_height][(self.center_x + cell_width) // cell_width] == 9 and (self.dead or self.in_box)):
+                    if level[linha][coluna] < 3 \
+                        or (level[linha][coluna] == 9 and (self.dead or self.in_box)):
                         self.turns[0] = True
 
             if self.direction == 0 or self.direction == 1:
                 if 12 <= self.center_x % cell_width <= 18:
-                    if level[(self.center_y + margem) // cell_height][self.center_x // cell_width] < 3 \
-                        or (level[(center_y + margem) // cell_height][self.center_x // cell_width] == 9 and (self.dead or self.in_box)):
+                    if level[linha][coluna] < 3 \
+                        or (level[linha][coluna] == 9 and (self.dead or self.in_box)):
                         self.turns[3] = True
-                    if level[(self.center_y - margem) // cell_height][self.center_x // cell_width] < 3 \
-                        or (level[(self.center_y - margem) // cell_height][self.center_x // cell_width] == 9 and (self.dead or self.in_box)):
+                    if level[linha][coluna] < 3 \
+                        or (level[linha][coluna] == 9 and (self.dead or self.in_box)):
                         self.turns[2] = True
                 if 12 <= self.center_y % cell_height <= 18:
-                    if level[self.center_y // cell_height][(self.center_x - margem) // cell_width] < 3 \
-                        or (level[self.center_y // cell_height][(self.center_x - margem) // cell_width] == 9 and (self.dead or self.in_box)):
+                    if level[linha][coluna] < 3 \
+                        or (level[linha][coluna] == 9 and (self.dead or self.in_box)):
                         self.turns[1] = True
-                    if level[self.center_y // cell_height][(self.center_x + margem) // cell_width] < 3 \
-                        or (level[self.center_y // cell_height][(self.center_x + margem) // cell_width] == 9 and (self.dead or self.in_box)):
+                    if level[linha][coluna] < 3 \
+                        or (level[linha][coluna] == 9 and (self.dead or self.in_box)):
                         self.turns[0] = True
         else:
             self.turns[0] = True
@@ -211,28 +212,81 @@ class Inimigo:
             self.in_box = True
         else:
             self.in_box = False
-        return self.turns, self.in_box
+        return self.turns, self.in_box'''
+
+        cell_h = (HEIGHT - 50) // 32
+        cell_w = WIDTH // 30
+        linha = max(0, min(int((self.y_pos + 22) // cell_h), len(level) - 1))
+        coluna = max(0, min(int((self.x_pos + 22) // cell_w), len(level[0]) - 1))
+        return level[linha][coluna] < 3
+
+    def check_turns(self):
+        cell_h = (HEIGHT - 50) // 32
+        cell_w = WIDTH // 30
+        margem = 15
+
+        linha = int((self.y_pos + 22) // cell_h)
+        coluna = int((self.x_pos + 22) // cell_w)
+
+        turns = [False, False, False, False]  # [direita, esquerda, cima, baixo]
+
+        if coluna + 1 < len(level[0]):
+            if level[linha][coluna + 1] < 3 or level[linha][coluna + 1] == 9:
+                turns[0] = True
+        if coluna - 1 >= 0:
+            if level[linha][coluna - 1] < 3 or level[linha][coluna - 1] == 9:
+                turns[1] = True
+        if linha - 1 >= 0:
+            if level[linha - 1][coluna] < 3 or level[linha - 1][coluna] == 9:
+                turns[2] = True
+        if linha + 1 < len(level):
+            if level[linha + 1][coluna] < 3 or level[linha + 1][coluna] == 9:
+                turns[3] = True
+
+        return turns
 
     def move(self):
-        while self.running:
-            time.sleep(0.01)
-            try:
-                #with inimigo_lock:
-                if not moving or game_over or game_won:
+        while True:
+            time.sleep(0.02)
+            with inimigo_lock:
+                if not moving or game_over:
                     continue
 
-                self.check_collisions()
-                self.update_target()
-                self.update_position()
-                print(
-                    f"Inimigo {self.id} - pos: ({self.x_pos:.1f}, {self.y_pos:.1f}) dir: {self.direction} target: {self.target}")
+                self.target = targets[self.id]
+                dx = self.target[0] - self.x_pos
+                dy = self.target[1] - self.y_pos
 
-            except Exception as e:
-                print(f'erro na thread do inimigo {self.id}: {e}')
+                turns = self.check_turns()
+
+                # Escolher eixo prioritário
+                if abs(dx) > abs(dy):
+                    if dx > 0 and turns[0]:
+                        self.x_pos += self.speed
+                    elif dx < 0 and turns[1]:
+                        self.x_pos -= self.speed
+                    elif dy > 0 and turns[3]:
+                        self.y_pos += self.speed
+                    elif dy < 0 and turns[2]:
+                        self.y_pos -= self.speed
+                else:
+                    if dy > 0 and turns[3]:
+                        self.y_pos += self.speed
+                    elif dy < 0 and turns[2]:
+                        self.y_pos -= self.speed
+                    elif dx > 0 and turns[0]:
+                        self.x_pos += self.speed
+                    elif dx < 0 and turns[1]:
+                        self.x_pos -= self.speed
+
+                self.x = max(0, min(self.x_pos, WIDTH - 45))
+                self.y = max(0, min(self.y_pos, HEIGHT - 50))
+
+                print(f"Inimigo {self.id} - pos: ({self.x_pos:.1f}, {self.y_pos:.1f}) target: {self.target}")
 
     def update_target(self):
-        self.target = targets[self.id]
-        print(f"Inimigo {self.id} target atualizado para {self.target}")
+        with inimigo_lock:
+            self.target = targets[self.id]
+            #print(f"Inimigo {self.id} target atualizado para {self.target}")
 
     def update_position(self):
         if self.id == 0:
@@ -389,38 +443,39 @@ class Inimigo:
 
     def move_nuvem(self): # vira sempre que colidir com paredes, caso contrário continua reto
      # D, E, C, B
-     if self.direction == 0 and self.turns[0]:  # direita
-         self.x_pos += self.speed
-     elif self.direction == 1 and self.turns[1]:  # esquerda
-         self.x_pos -= self.speed
-     elif self.direction == 2 and self.turns[2]:  # cima
-         self.y_pos -= self.speed
-     elif self.direction == 3 and self.turns[3]:  # baixo
-         self.y_pos += self.speed
-     else:
-         # Colidiu com parede — precisa virar
-         for i in range(4):  # direita, esquerda, cima, baixo
-             if self.turns[i]:
-                 self.direction = i
-                 break
-
-         # Após mudar a direção, aplica movimento
-         if self.direction == 0 and self.turns[0]:
+     with inimigo_lock:
+         if self.direction == 0 and self.turns[0]:  # direita
              self.x_pos += self.speed
-         elif self.direction == 1 and self.turns[1]:
+         elif self.direction == 1 and self.turns[1]:  # esquerda
              self.x_pos -= self.speed
-         elif self.direction == 2 and self.turns[2]:
+         elif self.direction == 2 and self.turns[2]:  # cima
              self.y_pos -= self.speed
-         elif self.direction == 3 and self.turns[3]:
+         elif self.direction == 3 and self.turns[3]:  # baixo
              self.y_pos += self.speed
+         else:
+             # Colidiu com parede — precisa virar
+             for i in range(4):  # direita, esquerda, cima, baixo
+                 if self.turns[i]:
+                     self.direction = i
+                     break
 
-         # Teleporte horizontal (túnel)
-     if self.x_pos < -30:
-         self.x_pos = 900
-     elif self.x_pos > 900:
-         self.x_pos -= 30
+             # Após mudar a direção, aplica movimento
+             if self.direction == 0 and self.turns[0]:
+                 self.x_pos += self.speed
+             elif self.direction == 1 and self.turns[1]:
+                 self.x_pos -= self.speed
+             elif self.direction == 2 and self.turns[2]:
+                 self.y_pos -= self.speed
+             elif self.direction == 3 and self.turns[3]:
+                 self.y_pos += self.speed
 
-     return self.x_pos, self.y_pos, self.direction
+             # Teleporte horizontal (túnel)
+         if self.x_pos < -30:
+             self.x_pos = 900
+         elif self.x_pos > 900:
+             self.x_pos -= 30
+
+         return self.x_pos, self.y_pos, self.direction
 
     def move_redes(self): # vira para cima ou para baixo qualquer momento para perseguir, mas para esquerda ou para direita somente em colisões
         #semáforo
@@ -1032,16 +1087,16 @@ while run:
             nuvem.dead = True
             eaten_inimigo[0] = True
             score += (2 * eaten_inimigo.count(True)) * 100
-        if player_circle.colliderect(redes.rect) and not nuvem.dead and not eaten_inimigo[1]:
-            nuvem.dead = True
+        if player_circle.colliderect(redes.rect) and not redes.dead and not eaten_inimigo[1]:
+            redes.dead = True
             eaten_inimigo[1] = True
             score += (2 * eaten_inimigo.count(True)) * 100
-        if player_circle.colliderect(computacional.rect) and not nuvem.dead and not eaten_inimigo[2]:
-            nuvem.dead = True
+        if player_circle.colliderect(computacional.rect) and not computacional.dead and not eaten_inimigo[2]:
+            computacional.dead = True
             eaten_inimigo[2] = True
             score += (2 * eaten_inimigo.count(True)) * 100
-        if player_circle.colliderect(operacional.rect) and not nuvem.dead and not eaten_inimigo[3]:
-            nuvem.dead = True
+        if player_circle.colliderect(operacional.rect) and not operacional.dead and not eaten_inimigo[3]:
+            operacional.dead = True
             eaten_inimigo[3] = True
             score += (2 * eaten_inimigo.count(True)) * 100
 
