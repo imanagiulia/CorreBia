@@ -1,13 +1,14 @@
 import copy
 import threading
 import time
+from codecs import namereplace_errors
 
 from board import boards
 import pygame
 import math
 
 pygame.init()
-inimigo_lock = threading.RLock()
+inimigo_lock = threading.Lock()
 
 #confi jogo
 # tamanho do "console" do jogo
@@ -99,7 +100,17 @@ class Inimigo:
         self.turns = [False, False, False, False]
         self.rect = pygame.Rect(self.x_pos, self.y_pos, 45, 45)
         self.running = True
-        self.thread = threading.Thread(target = self.move)
+
+        if id == 0:
+            self.thread = threading.Thread(target=self.run_nuvem_thread)
+        elif id == 1:
+            self.thread = threading.Thread(target=self.run_redes_thread)
+        elif id == 2:
+            self.thread = threading.Thread(target=self.run_computacional_thread)
+        elif id == 3:
+            self.thread = threading.Thread(target=self.run_operacional_thread)
+
+
         self.thread.daemon = True
         self.thread.start()
 
@@ -113,123 +124,33 @@ class Inimigo:
         self.rect = pygame.rect.Rect(self.x_pos, self.y_pos, 45, 45)
         return self.rect
 
-
-   #def run_nuvem(self):
-    #    while self.running:
-     #       with inimigo_lock:
-      #          if moving and not game_over and not game_won:
-       #             if not nuvem_dead and not self.in_box:
-        #                nuvem_x, nuvem_y, nuvem_direction = self.move_nuvem()
-         #           else:
-          #              nuvem_x, nuvem_y, nuvem_direction = self.move_operacional()
-
-
-    #def run_redes(self):
-     #   while self.running:
-      #      with inimigo_lock:
-       #         if moving and not game_over and not game_won:
-        #            if not redes_dead and not self.in_box:
-         #               redes_x, redes_y, redes_direction = self.move_redes()
-          #          else:
-           #             redes_x, redes_y, redes_direction = self.move_operacional()
-
-
-   # def run_computacional(self):
-    #    while self.running:
-     #       with inimigo_lock:
-      #          if moving and not game_over and not game_won:
-       #             if not computacional_dead and not self.in_box:
-        #                computacional_x, computacional_y, computacional_direction = self.move_computacional()
-         #           else:
-          #              computacional_x, computacional_y, computacional_direction = self.move_operacional()
-
-
-   # def run_operacional(self):
-    #    while self.running:
-     #       with inimigo_lock:
-      #          if moving and not game_over and not game_won:
-       #             operacional_x, operacional_y, operacional_direction = self.move_operacional()
-
-
     def check_collisions(self): # D, E, C, B
-        cell_height = (HEIGHT - 50) // 32
-        cell_width = (WIDTH // 30)
-        margem = 15
-        #linha = max(0, min((self.center_y) // cell_height, len(level) - 1))
-        #coluna = max(0, min((self.center_x) // cell_width, len(level[0]) - 1))
-        '''self.turns = [False, False, False, False]
-        if 0 < self.center_x // 30 < 29:
-            if level[linha][coluna] == 9:
-                self.turns[2] = True
-            if level[linha][coluna] < 3 \
-                or level[linha][coluna] == 9 and (self.dead or self.in_box):
-                self.turns[1] = True
-            if level[linha][coluna] < 3 \
-                or level[linha][coluna] == 9 and (self.dead or self.in_box):
-                self.turns[0] = True
-            if level[linha][coluna] < 3 \
-                or level[linha][coluna] == 9 and (self.dead or self.in_box):
-                self.turns[3] = True
-            if level[linha][coluna] < 3 \
-                or level[linha][coluna] == 9 and (self.dead or self.in_box):
-                self.turns[2] = True
-
-            if self.direction == 2 or self.direction == 3:
-                if 12 <= self.center_x % cell_width <= 18:
-                    if level[linha][coluna] < 3 \
-                        or (level[linha][coluna] == 9 and (self.dead or self.in_box)):
-                        self.turns[3] = True
-                    if level[linha][coluna] < 3 \
-                        or (level[linha][coluna] == 9 and (self.dead or self.in_box)):
-                        self.turns[2] = True
-                if 12 <= self.center_y % cell_height <= 18:
-                    if level[linha][coluna] < 3 \
-                        or (level[linha][coluna] == 9 and (self.dead or self.in_box)):
-                        self.turns[1] = True
-                    if level[linha][coluna] < 3 \
-                        or (level[linha][coluna] == 9 and (self.dead or self.in_box)):
-                        self.turns[0] = True
-
-            if self.direction == 0 or self.direction == 1:
-                if 12 <= self.center_x % cell_width <= 18:
-                    if level[linha][coluna] < 3 \
-                        or (level[linha][coluna] == 9 and (self.dead or self.in_box)):
-                        self.turns[3] = True
-                    if level[linha][coluna] < 3 \
-                        or (level[linha][coluna] == 9 and (self.dead or self.in_box)):
-                        self.turns[2] = True
-                if 12 <= self.center_y % cell_height <= 18:
-                    if level[linha][coluna] < 3 \
-                        or (level[linha][coluna] == 9 and (self.dead or self.in_box)):
-                        self.turns[1] = True
-                    if level[linha][coluna] < 3 \
-                        or (level[linha][coluna] == 9 and (self.dead or self.in_box)):
-                        self.turns[0] = True
-        else:
-            self.turns[0] = True
-            self.turns[1] = True
-        if 350 <= self.x_pos < 550 and 370 < self.y_pos < 480:
-            self.in_box = True
-        else:
-            self.in_box = False
-        return self.turns, self.in_box'''
+        self.center_x = self.x_pos + 22
+        self.center_y = self.y_pos + 22
 
         cell_h = (HEIGHT - 50) // 32
         cell_w = WIDTH // 30
         linha = max(0, min(int((self.y_pos + 22) // cell_h), len(level) - 1))
         coluna = max(0, min(int((self.x_pos + 22) // cell_w), len(level[0]) - 1))
-        return level[linha][coluna] < 3
+
+        if 350 <= self.x_pos < 550 and 370 < self.y_pos < 480:
+            self.in_box = True
+        else:
+            self.in_box = False
+
+        return self.check_turns()
 
     def check_turns(self):
-        cell_h = (HEIGHT - 50) // 32
-        cell_w = WIDTH // 30
+        cell_height = (HEIGHT - 50) // 32
+        cell_width = WIDTH // 30
         margem = 15
 
-        linha = int((self.y_pos + 22) // cell_h)
-        coluna = int((self.x_pos + 22) // cell_w)
+        linha = int((self.y_pos + 22) // cell_height)
+        coluna = int((self.x_pos + 22) // cell_width)
 
-        turns = [False, False, False, False]  # [direita, esquerda, cima, baixo]
+        turns = [False, False, False, False]  # direita, esquerda, cima, baixo
 
+        # verifica se pode virar d, e, c, b
         if coluna + 1 < len(level[0]):
             if level[linha][coluna + 1] < 3 or level[linha][coluna + 1] == 9:
                 turns[0] = True
@@ -243,50 +164,64 @@ class Inimigo:
             if level[linha + 1][coluna] < 3 or level[linha + 1][coluna] == 9:
                 turns[3] = True
 
+        if 10 <= self.center_x % cell_width <= 16:
+            if level[(self.center_y + margem) // cell_height][self.center_x // cell_width] < 3:
+                turns[3] = True
+            if level[(self.center_y - margem) // cell_height][self.center_x // cell_width] < 3:
+                turns[2] = True
+        if 10 <= self.center_y % cell_height <= 16:
+            if level[self.center_y // cell_height][(self.center_x + margem) // cell_width] < 3:
+                turns[0] = True
+            if level[self.center_y // cell_height][(self.center_x - margem) // cell_width] < 3:
+                turns[1] = True
+
         return turns
 
-    def move(self):
-        while True:
+    def run_nuvem_thread(self):
+        while self.running:
             time.sleep(0.02)
             with inimigo_lock:
-                if not moving or game_over:
-                    continue
-
-                self.target = targets[self.id]
-                dx = self.target[0] - self.x_pos
-                dy = self.target[1] - self.y_pos
-
-                turns = self.check_turns()
-
-                # Escolher eixo prioritário
-                if abs(dx) > abs(dy):
-                    if dx > 0 and turns[0]:
-                        self.x_pos += self.speed
-                    elif dx < 0 and turns[1]:
-                        self.x_pos -= self.speed
-                    elif dy > 0 and turns[3]:
-                        self.y_pos += self.speed
-                    elif dy < 0 and turns[2]:
-                        self.y_pos -= self.speed
+                if moving and not game_over and not game_won:
+                    self.turns = self.check_turns()
+                if not self.dead and not self.in_box:
+                    self.move_nuvem()
                 else:
-                    if dy > 0 and turns[3]:
-                        self.y_pos += self.speed
-                    elif dy < 0 and turns[2]:
-                        self.y_pos -= self.speed
-                    elif dx > 0 and turns[0]:
-                        self.x_pos += self.speed
-                    elif dx < 0 and turns[1]:
-                        self.x_pos -= self.speed
+                    self.move_operacional() # voltar para a caixa quando tá morto
 
-                self.x = max(0, min(self.x_pos, WIDTH - 45))
-                self.y = max(0, min(self.y_pos, HEIGHT - 50))
+    def run_redes_thread(self):
+        while self.running:
+            time.sleep(0.02)
+            with inimigo_lock:
+                if moving and not game_over and not game_won:
+                    self.turns = self.check_turns()
+                if not self.dead and not self.in_box:
+                    self.move_redes()
+                else:
+                    self.move_operacional() # voltar para a caixa quando tá morto
 
-                print(f"Inimigo {self.id} - pos: ({self.x_pos:.1f}, {self.y_pos:.1f}) target: {self.target}")
+    def run_computacional_thread(self):
+        while self.running:
+            time.sleep(0.02)
+            with inimigo_lock:
+                if moving and not game_over and not game_won:
+                    self.turns = self.check_turns()
+                if not self.dead and not self.in_box:
+                    self.move_computacional()
+                else:
+                    self.move_operacional() # voltar para a caixa quando tá morto
 
-    def update_target(self):
+    def run_operacional_thread(self):
+        while self.running:
+            time.sleep(0.02)
+            with inimigo_lock:
+                if moving and not game_over and not game_won:
+                    self.turns = self.check_turns()
+                    self.move_operacional()
+
+    def update_target(self, player_x, player_y):
         with inimigo_lock:
-            self.target = targets[self.id]
-            #print(f"Inimigo {self.id} target atualizado para {self.target}")
+            self.target = (player_x, player_y)
+            print(f"Inimigo {self.id} target atualizado para {self.target}")
 
     def update_position(self):
         if self.id == 0:
@@ -300,436 +235,158 @@ class Inimigo:
 
     def move_operacional(self): # vira sempre que for vantajoso para perseguição
         #semáforo
-        with inimigo_lock: # D, E, C, B
-            if self.direction == 0:
-                if self.target[0] > self.x_pos and self.turns[0]:
-                    self.x_pos += self.speed
-                elif not self.turns[0]:
-                    if self.target[1] > self.y_pos and self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.target[1] < self.y_pos and self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.target[0] < self.x_pos and self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    elif self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                elif self.turns[0]:
-                    if self.target[1] > self.y_pos and self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    if self.target[1] < self.y_pos and self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    else:
-                        self.x_pos += self.speed
-            elif self.direction == 1:
-                if self.target[1] > self.y_pos and self.turns[3]:
-                    self.direction = 3
-                elif self.target[0] < self.x_pos and self.turns[1]:
-                    self.x_pos -= self.speed
-                elif not self.turns[1]:
-                    if self.target[1] > self.y_pos and self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.target[1] < self.y_pos and self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.target[0] > self.x_pos and self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                    elif self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                elif self.turns[1]:
-                    if self.target[1] > self.y_pos and self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    if self.target[1] < self.y_pos and self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    else:
-                        self.x_pos -= self.speed
-            elif self.direction == 2:
-                if self.target[0] < self.x_pos and self.turns[1]:
-                    self.direction = 1
-                    self.x_pos -= self.speed
-                elif self.target[1] < self.y_pos and self.turns[2]:
-                    self.direction = 2
-                    self.y_pos -= self.speed
-                elif not self.turns[2]:
-                    if self.target[0] > self.x_pos and self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                    elif self.target[0] < self.x_pos and self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    elif self.target[1] > self.y_pos and self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    elif self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                elif self.turns[2]:
-                    if self.target[0] > self.x_pos and self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                    if self.target[0] < self.x_pos and self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    else:
-                        self.y_pos -= self.speed
-            elif self.direction == 3:
-                if self.target[1] > self.y_pos and self.turns[3]:
-                    self.y_pos += self.speed
-                elif not self.turns[3]:
-                    if self.target[0] > self.x_pos and self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                    elif self.target[0] < self.x_pos and self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    elif self.target[1] < self.y_pos and self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    elif self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                elif self.turns[3]:
-                    if self.target[0] > self.x_pos and self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                    elif self.target[0] < self.x_pos and self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    else:
-                        self.y_pos += self.speed
-            if self.x_pos < -30:
-                self.x_pos = 900
-            elif self.x_pos > 900:
-                self.x_pos -= 30
+        self.center_x = self.x_pos + 22
+        self.center_y = self.y_pos + 22
 
-            self.x_pos = max(-30, min(self.x_pos, WIDTH + 30))
-            self.y_pos = max(-30, min(self.y_pos, HEIGHT + 30))
+        dx = self.target[0] - self.x_pos
+        dy = self.target[1] - self.y_pos
+         # D, E, C, B
 
-            return self.x_pos, self.y_pos, self.direction
+        if abs(dx) > abs(dy): # mov horizontal
+            if dx > 0 and self.turns[0]:
+                self.x_pos += self.speed
+                self.direction = 0
+            elif dx < 0 and self.turns[1]:
+                self.x_pos -= self.speed
+                self.direction = 1
+            elif dy > 0 and self.turns[3]:
+                self.y_pos += self.speed
+                self.direction = 3
+            elif dy < 0 and self.turns[2]:
+                self.y_pos -= self.speed
+                self.direction = 2
+        else: # mov vertical
+            if dy > 0 and self.turns[3]:
+                self.y_pos += self.speed
+                self.direction = 3
+            elif dy < 0 and self.turns[2]:
+                self.y_pos -= self.speed
+                self.direction = 2
+            elif dx > 0 and self.turns[0]:
+                self.x_pos += self.speed
+                self.direction = 0
+            elif dx < 0 and self.turns[1]:
+                self.x_pos -= self.speed
+                self.direction = 1
+
+        #teletranspote tunel
+        if self.x_pos < -30:
+            self.x_pos = WIDTH - 45
+        elif self.x_pos > WIDTH - 15:
+            self.x_pos = -25
 
     def move_nuvem(self): # vira sempre que colidir com paredes, caso contrário continua reto
      # D, E, C, B
-     with inimigo_lock:
-         if self.direction == 0 and self.turns[0]:  # direita
-             self.x_pos += self.speed
-         elif self.direction == 1 and self.turns[1]:  # esquerda
-             self.x_pos -= self.speed
-         elif self.direction == 2 and self.turns[2]:  # cima
-             self.y_pos -= self.speed
-         elif self.direction == 3 and self.turns[3]:  # baixo
-             self.y_pos += self.speed
-         else:
-             # Colidiu com parede — precisa virar
-             for i in range(4):  # direita, esquerda, cima, baixo
-                 if self.turns[i]:
-                     self.direction = i
-                     break
 
-             # Após mudar a direção, aplica movimento
-             if self.direction == 0 and self.turns[0]:
+     self.center_x = self.x_pos + 22
+     self.center_y = self.y_pos + 22
+
+
+     if self.direction == 0 and self.turns[0]:  # direita
+         self.x_pos += self.speed
+     elif self.direction == 1 and self.turns[1]:  # esquerda
+         self.x_pos -= self.speed
+     elif self.direction == 2 and self.turns[2]:  # cima
+         self.y_pos -= self.speed
+     elif self.direction == 3 and self.turns[3]:  # baixo
+         self.y_pos += self.speed
+     else:
+         # Colidiu com parede — precisa virar
+         new_direction = False
+         for i in range(4):
+             if self.turns[i]:
+                 self.direction = i
+                 new_direction = True
+                 break
+
+         if new_direction:
+            if self.direction == 0:
                  self.x_pos += self.speed
-             elif self.direction == 1 and self.turns[1]:
+            elif self.direction == 1:
                  self.x_pos -= self.speed
-             elif self.direction == 2 and self.turns[2]:
+            elif self.direction == 2:
                  self.y_pos -= self.speed
-             elif self.direction == 3 and self.turns[3]:
+            elif self.direction == 3:
                  self.y_pos += self.speed
 
-             # Teleporte horizontal (túnel)
-         if self.x_pos < -30:
-             self.x_pos = 900
-         elif self.x_pos > 900:
-             self.x_pos -= 30
-
-         return self.x_pos, self.y_pos, self.direction
+         # Teleporte horizontal (túnel)
+     if self.x_pos < -30:
+         self.x_pos = 900
+     elif self.x_pos > 900:
+         self.x_pos -= 30
 
     def move_redes(self): # vira para cima ou para baixo qualquer momento para perseguir, mas para esquerda ou para direita somente em colisões
-        #semáforo
-        with inimigo_lock: # D, E, C, B
-            if self.direction == 0:
-                if self.target[0] > self.x_pos and self.turns[0]:
-                    self.x_pos += self.speed
-                elif not self.turns[0]:
-                    if self.target[1] > self.y_pos and self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.target[1] < self.y_pos and self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.target[0] < self.x_pos and self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    elif self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                elif self.turns[0]:
-                    if self.target[1] > self.y_pos and self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    if self.target[1] < self.y_pos and self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    else:
-                        self.x_pos += self.speed
-            elif self.direction == 1:
-                if self.target[1] > self.y_pos and self.turns[3]:
-                    self.direction = 3
-                elif self.target[0] < self.x_pos and self.turns[1]:
-                    self.x_pos -= self.speed
-                elif not self.turns[1]:
-                    if self.target[1] > self.y_pos and self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.target[1] < self.y_pos and self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.target[0] > self.x_pos and self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                    elif self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                elif self.turns[1]:
-                    if self.target[1] > self.y_pos and self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    if self.target[1] < self.y_pos and self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    else:
-                        self.x_pos -= self.speed
-            elif self.direction == 2:
-                if self.target[1] < self.y_pos and self.turns[2]:
-                    self.direction = 2
-                    self.y_pos -= self.speed
-                elif not self.turns[2]:
-                    if self.target[0] > self.x_pos and self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                    elif self.target[0] < self.x_pos and self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    elif self.target[1] > self.y_pos and self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    elif self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                elif self.turns[2]:
-                    self.y_pos -= self.speed
-            elif self.direction == 3:
-                if self.target[1] > self.y_pos and self.turns[3]:
-                    self.y_pos += self.speed
-                elif not self.turns[3]:
-                    if self.target[0] > self.x_pos and self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                    elif self.target[0] < self.x_pos and self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    elif self.target[1] < self.y_pos and self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    elif self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                elif self.turns[3]:
-                    if self.target[0] > self.x_pos and self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                    elif self.target[0] < self.x_pos and self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    else:
-                        self.y_pos += self.speed
-            if self.x_pos < -30:
-                self.x_pos = 900
-            elif self.x_pos > 900:
-                self.x_pos -= 30
-            return self.x_pos, self.y_pos, self.direction
+        self.center_x = self.x_pos + 22
+        self.center_y = self.y_pos + 22
+
+        dx = self.target[0] - self.x_pos
+        dy = self.target[1] - self.y_pos
+
+        if dy > 0 and self.turns[3]:
+            self.y_pos += self.speed
+            self.direction = 3
+        elif dy < 0 and self.turns[2]:
+            self.y_pos -= self.speed
+            self.direction = 2
+        elif self.direction == 0 and self.turns[0]:
+            self.x_pos += self.speed
+        elif self.direction == 1 and self.turns[1]:
+            self.x_pos -= self.speed
+        else:
+            if dx > 0 and self.turns[0]:
+                self.x_pos += self.speed
+                self.direction = 0
+            elif dx < 0 and self.turns[1]:
+                self.x_pos -= self.speed
+                self.direction = 1
+            elif dy > 0 and self.turns[3]:
+                self.y_pos += self.speed
+                self.direction = 3
+            elif dy < 0 and self.turns[2]:
+                self.y_pos -= self.speed
+                self.direction = 2
+
+        if self.x_pos < -30:
+            self.x_pos = WIDTH - 45
+        elif self.x_pos > WIDTH - 15:
+            self.x_pos = -25
 
     def move_computacional(self): # vira para a esquera ou para a direita sempre que for vantajoso para perseguição, mas para cima ou para baixo apenas em cplisões
-        #semáforo
-        with inimigo_lock: # D, E, C, B
-            if self.direction == 0:
-                if self.target[0] > self.x_pos and self.turns[0]:
-                    self.x_pos += self.speed
-                elif not self.turns[0]:
-                    if self.target[1] > self.y_pos and self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.target[1] < self.y_pos and self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.target[0] < self.x_pos and self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    elif self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                elif self.turns[0]:
-                    self.x_pos += self.speed
-            elif self.direction == 1:
-                if self.target[1] > self.y_pos and self.turns[3]:
-                    self.direction = 3
-                elif self.target[0] < self.x_pos and self.turns[1]:
-                    self.x_pos -= self.speed
-                elif not self.turns[1]:
-                    if self.target[1] > self.y_pos and self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.target[1] < self.y_pos and self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.target[0] > self.x_pos and self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                    elif self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                elif self.turns[1]:
-                    self.x_pos -= self.speed
-            elif self.direction == 2:
-                if self.target[0] < self.x_pos and self.turns[1]:
-                    self.direction = 1
-                    self.x_pos -= self.speed
-                elif self.target[1] < self.y_pos and self.turns[2]:
-                    self.direction = 2
-                    self.y_pos -= self.speed
-                elif not self.turns[2]:
-                    if self.target[0] > self.x_pos and self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                    elif self.target[0] < self.x_pos and self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    elif self.target[1] > self.y_pos and self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    elif self.turns[3]:
-                        self.direction = 3
-                        self.y_pos += self.speed
-                    elif self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                elif self.turns[2]:
-                    if self.target[0] > self.x_pos and self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                    if self.target[0] < self.x_pos and self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    else:
-                        self.y_pos -= self.speed
-            elif self.direction == 3:
-                if self.target[1] > self.y_pos and self.turns[3]:
-                    self.y_pos += self.speed
-                elif not self.turns[3]:
-                    if self.target[0] > self.x_pos and self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                    elif self.target[0] < self.x_pos and self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    elif self.target[1] < self.y_pos and self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.turns[2]:
-                        self.direction = 2
-                        self.y_pos -= self.speed
-                    elif self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    elif self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                elif self.turns[3]:
-                    if self.target[0] > self.x_pos and self.turns[0]:
-                        self.direction = 0
-                        self.x_pos += self.speed
-                    elif self.target[0] < self.x_pos and self.turns[1]:
-                        self.direction = 1
-                        self.x_pos -= self.speed
-                    else:
-                        self.y_pos += self.speed
-            if self.x_pos < -30:
-                self.x_pos = 900
-            elif self.x_pos > 900:
-                self.x_pos -= 30
-            return self.x_pos, self.y_pos, self.direction
+        # D, E, C, B
+        self.center_x = self.x_pos + 22
+        self.center_y = self.y_pos + 22
+
+        dx = self.target[0] - self.x_pos
+        dy = self.target[1] - self.y_pos
+
+        if dx > 0 and self.turns[0]:
+            self.x_pos += self.speed
+            self.direction = 0
+        elif dx < 0 and self.turns[1]:
+            self.x_pos -= self.speed
+            self.direction = 1
+        elif self.direction == 2  and self.turns[2]:
+            self.y_pos -= self.speed
+        elif self.direction == 3  and self.turns[3]:
+            self.y_pos += self.speed
+        else:
+            if dy > 0 and self.turns[3]:
+                self.y_pos += self.speed
+                self.direction = 3
+            elif dy < 0 and self.turns[2]:
+                self.y_pos -= self.speed
+                self.direction = 2
+            elif dx > 0 and self.turns[0]:
+                self.x_pos += self.speed
+                self.direction = 0
+            elif dx < 0 and self.turns[1]:
+                self.x_pos -= self.speed
+                self.direction = 1
+
+        if self.x_pos < -30:
+            self.x_pos = WIDTH - 45
+        elif self.x_pos > WIDTH - 15:
+            self.x_pos = -25
 
 
 
@@ -752,20 +409,19 @@ def draw_alter():
         screen.blit(gameover_text, (100, 300))
 
 def check_collisions(scor, power, power_count, eaten_inimigo):
-    with inimigo_lock:
-        cell_height = (HEIGHT - 50)  // 32
-        cell_widht = WIDTH // 30
-        if 0 < player_x < 870:
-            if level[center_y // cell_height][center_x // cell_widht] == 1:
-                level[center_y // cell_height][center_x // cell_widht] = 0
-                scor += 10
-            if level[center_y // cell_height][center_x // cell_widht] == 2:
-                level[center_y // cell_height][center_x // cell_widht] = 0
-                scor += 50
-                power = True
-                power_count = 0
-                eaten_inimigo = [False, False, False, False]
-        return scor, power, power_count, eaten_inimigo
+    cell_height = (HEIGHT - 50)  // 32
+    cell_widht = WIDTH // 30
+    if 0 < player_x < 870:
+        if level[center_y // cell_height][center_x // cell_widht] == 1:
+            level[center_y // cell_height][center_x // cell_widht] = 0
+            scor += 10
+        if level[center_y // cell_height][center_x // cell_widht] == 2:
+            level[center_y // cell_height][center_x // cell_widht] = 0
+            scor += 50
+            power = True
+            power_count = 0
+            eaten_inimigo = [False, False, False, False]
+    return scor, power, power_count, eaten_inimigo
 
 def draw_board(level):
     num1 = ((HEIGHT - 50) // 32)
@@ -922,52 +578,94 @@ def move_player(play_x, play_y):
 
     return play_x, play_y
 
-def get_targets():
-    with inimigo_lock:
-        runaway_x = 900 if player_x < 450 else 0
-        runaway_y = 900 if player_y < 450 else 0
-        return_target = (380, 400)
-        targets = []
+def get_targets(player_x, player_y):
+    runaway_x = 900 if player_x < 450 else 0
+    runaway_y = 900 if player_y < 450 else 0
+    return_target = (380, 400)
 
-        for inimigo in [nuvem, redes, computacional, operacional]:
-            if powerup:
-                if not inimigo.dead and not eaten_inimigo[inimigo.id]:
-                   if inimigo.id == 0:
-                       targets.append((runaway_x, runaway_y))
-                   elif inimigo.id == 1:
-                        targets.append((runaway_x, player_y))
-                   elif inimigo.id == 2:
-                       targets.append((player_x, runaway_y))
-                   elif inimigo.id == 3:
-                       targets.append((450, 450))
-                elif not inimigo.dead and eaten_inimigo[inimigo.id]:
-                    if 340 < inimigo.x_pos < 560 and 340 < inimigo.y_pos < 500:
-                        targets.append((400, 100))
-                    else:
-                        targets.append((player_x, player_y))
-                else:
-                    targets.append(return_target)
+    nuve_target = (0,0)
+    rede_target = (0,0)
+    compu_target = (0,0)
+    opera_target = (0,0)
+
+    if powerup:
+        if not nuvem.dead and not eaten_inimigo[0]:
+            nuve_target = (runaway_x, runaway_y)
+        elif not nuvem.dead and eaten_inimigo[0]:
+            if 340 < nuvem.x_pos < 560 and 340 < nuvem.y_pos < 500:
+                nuve_target = (400, 100)
             else:
-                if not inimigo.dead:
-                    if inimigo.id == 0:
-                        targets.append((player_x, player_y))
-                    elif inimigo.id == 1:
-                        targets.append((
-                            min(max(0, player_x), WIDTH - 50),
-                            min(max(0, player_y - 100), HEIGHT - 100)
-                        ))
-                    elif inimigo.id == 2:
-                        targets.append((
-                            min(max(0, player_x + 100), WIDTH - 50),
-                            min(max(0, player_y), HEIGHT - 100)
-                        ))
-                    elif inimigo.id == 3:
-                        targets.append((
-                            min(max(0, player_x - 100), WIDTH - 50),
-                            min(max(0, player_y), HEIGHT - 100)
-                        ))
+                nuve_target = (player_x, player_y)
+        else:
+            nuve_target = return_target
+    else:
+        if not nuvem.dead:
+            if 340 < nuvem.x_pos < 560 and 340 < nuvem.y_pos < 500:
+                nuve_target = (400, 100)
+            else:
+                nuve_target = (player_x, player_y)
+        else:
+            nuve_target = return_target
 
-        return targets
+
+    if powerup:
+        if not redes.dead and not eaten_inimigo[1]:
+            rede_target = (runaway_x, player_y)
+        elif not redes.dead and eaten_inimigo[1]:
+            if 340 < redes.x_pos < 560 and 340 < redes.y_pos < 500:
+                rede_target = (400, 100)
+            else:
+                rede_target = (player_x, player_y)
+        else:
+            rede_target = return_target
+    else:
+        if not redes.dead:
+            if 340 < redes.x_pos < 560 and 340 < redes.y_pos < 500:
+                rede_target = (400, 100)
+            else:
+                rede_target = (player_x + 100, player_y - 100)
+        else:
+            rede_target = return_target
+
+    if powerup:
+        if not computacional.dead and not eaten_inimigo[2]:
+            compu_target = (player_x, runaway_y)
+        elif not computacional.dead and eaten_inimigo[2]:
+            if 340 < computacional.x_pos < 560 and 340 < computacional.y_pos < 500:
+                compu_target = (400, 100)
+            else:
+                compu_target = (player_x, player_y)
+        else:
+            compu_target = return_target
+    else:
+        if not computacional.dead:
+            if 340 < computacional.x_pos < 560 and 340 < computacional.y_pos < 500:
+                compu_target = (400, 100)
+            else:
+                compu_target = (player_x - 150, player_y + 50)
+        else:
+            compu_target = return_target
+
+    if powerup:
+        if not operacional.dead and not eaten_inimigo[3]:
+            opera_target = (450, 450)
+        elif not operacional.dead and eaten_inimigo[3]:
+            if 340 < operacional.x_pos < 560 and 340 < operacional.y_pos < 500:
+                opera_target = (400, 100)
+            else:
+                opera_target = (player_x, player_y)
+        else:
+            opera_target = return_target
+    else:
+        if not operacional.dead:
+            if 340 < operacional.x_pos < 560 and 340 < operacional.y_pos < 500:
+                opera_target = (400, 100)
+            else:
+                opera_target = (player_x - 150, player_y + 50)
+        else:
+            opera_target = return_target
+
+    return [nuve_target, rede_target, compu_target, opera_target]
 
 
 nuvem = Inimigo(56, 58 , targets[0], inimigo_speeds[0], nuvem_img, 0, False, False, 0)
@@ -986,12 +684,16 @@ while run:
     else:
         counter = 0
         flicker = True
+
+    # powerup
     if powerup == True and powerup_count < 600:
         powerup_count += 1
     elif powerup and powerup_count >= 600:
         powerup_count = 0
         powerup = False
         eaten_inimigo = [False, False, False, False]
+
+    # inicio/reinicio
     if startup_counter  < 30 and not game_over and not game_won:
         moving = False
         startup_counter += 1
@@ -1003,29 +705,26 @@ while run:
     center_x = player_x + 25
     center_y = player_y + 25
 
-    targets = get_targets()
-    turns_allowed = check_position(center_x, center_y)
-
+    #velocidades
     if powerup:
-        inimigo_speeds = [1, 1, 1, 1]
+        nuvem.speed = 1
+        redes.speed = 1
+        computacional.speed = 1
+        operacional.speed = 1
     else:
-        inimigo_speeds = [2, 2, 2, 2]
+        nuvem.speed = 2
+        redes.speed = 2
+        computacional.speed = 2
+        operacional.speed = 2
+
     if eaten_inimigo[0]:
-        inimigo_speeds[0] = 2
+        nuvem.speed = 4
     if eaten_inimigo[1]:
-        inimigo_speeds[1] = 2
+        nuvem.speed = 4
     if eaten_inimigo[2]:
-        inimigo_speeds[2] = 2
+        nuvem.speed = 4
     if eaten_inimigo[3]:
-        inimigo_speeds[3] = 2
-    #if nuvem_dead:
-     #   inimigo_speeds[0] = 4
-    #if redes_dead:
-     #   inimigo_speeds[1] = 4
-    #if computacional_dead:
-     #   inimigo_speeds[2] = 4
-    #if operacional_dead:
-        inimigo_speeds[3] = 4
+        nuvem.speed = 4
 
     game_won = True
     for i in range(len(level)):
@@ -1035,6 +734,13 @@ while run:
     player_circle = pygame.draw.circle(screen, 'black', (center_x, center_y), 21, 2)
     draw_player()
 
+    target_atual = get_targets(player_x, player_y)
+    nuvem.target = target_atual[0]
+    redes.target = target_atual[1]
+    computacional.target = target_atual[2]
+    operacional.target = target_atual[3]
+
+    turns_allowed = check_position(center_x, center_y)
 
     with inimigo_lock:
         nuvem.rect = nuvem.draw()
@@ -1119,7 +825,7 @@ while run:
             if event.key == pygame.K_DOWN and turns_allowed[3]:
                 direction_command = 3
             if event.key == pygame.K_SPACE and (game_over or game_won):
-                lives -= 1
+                lives = 3
                 startup_counter = 0
                 powerup = False
                 powerup_count = 0
@@ -1145,7 +851,6 @@ while run:
                 computacional.dead = False
                 operacional.dead = False
                 score = 0
-                lives = 3
                 level = copy.deepcopy(boards)
                 game_over = False
                 game_won = False
@@ -1169,6 +874,17 @@ while run:
         player_x = 45
     elif player_x < 0:
         player_x = WIDTH - 45
+
+
+    if nuvem.dead and nuvem.in_box:
+        nuvem.dead = False
+    if redes.dead and redes.in_box:
+        redes.dead = False
+    if computacional.dead and computacional.in_box:
+        computacional.dead = False
+    if operacional.dead and operacional.in_box:
+        operacional.dead = False
+
     pygame.display.flip()
 
 nuvem.running = False
