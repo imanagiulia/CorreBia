@@ -1,8 +1,6 @@
 import copy
 import threading
 import time
-from codecs import namereplace_errors
-
 from board import boards
 import pygame
 import math
@@ -18,6 +16,7 @@ screen = pygame.display.set_mode([WIDTH, HEIGHT])
 timer = pygame.time.Clock()
 fps = 60
 font = pygame.font.Font('freesansbold.ttf', 20)
+font2 = pygame.font.Font('freesansbold.ttf', 30)
 level_inicial = boards
 level = copy.deepcopy(boards)
 color = 'orange'
@@ -49,22 +48,6 @@ inimigo_speeds = [2, 2, 2, 2]
 eaten_inimigo = [False, False, False, False]
 targets = [(player_x, player_y), (player_x, player_y), (player_x, player_y), (player_x, player_y)]
 
-# posição inicial inimigos
-#nuvem_x = 56
-#nuvem_y = 58
-#nuvem_direction = 0
-#redes_x = 400
-#redes_y = 438
-#redes_direction = 2
-#computacional_x = 440
-#computacional_y = 438
-#computacional_direction = 2
-#operacional_x = 440
-#operacional_y = 438
-#operacional_direction = 2
-# direita, esquerda, cima, baixo
-
-
 # defi jogo
 score = 0
 powerup = False
@@ -75,14 +58,6 @@ startup_counter = 0
 game_over = False
 game_won = False
 
-#nuvem_dead = False
-#redes_dead = False
-#computacional_dead = False
-#operacional_dead = False
-#nuvem_box = False
-#redes_box = False
-#computacional_box = False
-#operacional_box = False
 
 class Inimigo:
     def __init__(self, x_coord, y_coord, target, speed, img, direction, dead, box, id):
@@ -393,20 +368,28 @@ class Inimigo:
 def draw_alter():
     score_text = font.render(f'Score: {score}', True, 'white')
     screen.blit(score_text, (10, 720))
-    if powerup == True:
+    if powerup:
         pygame.draw.circle(screen, 'red', (140, 720), 15)
     for l in range(lives):
         screen.blit(pygame.transform.scale(player_images[1], (40,40)), (650 + l * 40, 705))
     if game_over:
-        pygame.draw.rect(screen, 'white', [50, 200, 800, 300], 0, 10)
-        pygame.draw.rect(screen, 'dark gray', [70, 220, 760, 260], 0, 10)
-        gameover_text = font.render('Game Over! Aperte [espaço] para recomeçar!', True, 'red')
-        screen.blit(gameover_text, (100, 300))
+        pygame.draw.rect(screen, 'dark gray', [50, 300, 800, 300], 0, 10)
+        pygame.draw.rect(screen, 'orange', [70, 320, 760, 260], 0, 10)
+        gameover_text1 = font2.render('Game Over!', True, 'red')
+        gameover_text2 = font.render(' Aperte [espaço] para recomeçar!', True, 'red')
+        gameover_rect1 = gameover_text1.get_rect(center=(900 // 2, 850 //2))
+        gameover_rect2 = gameover_text2.get_rect(center=(900 // 2, 950 //2))
+        screen.blit(gameover_text1, gameover_rect1)
+        screen.blit(gameover_text2, gameover_rect2)
     if game_won:
-        pygame.draw.rect(screen, 'white', [50, 200, 800, 300], 0, 10)
-        pygame.draw.rect(screen, 'dark gray', [70, 220, 760, 260], 0, 10)
-        gameover_text = font.render('VICTORY!!! Aperte [espaço] para recomeçar!', True, 'yellow')
-        screen.blit(gameover_text, (100, 300))
+        pygame.draw.rect(screen, 'white', [50, 300, 800, 300], 0, 10)
+        pygame.draw.rect(screen, 'dark gray', [70, 320, 760, 260], 0, 10)
+        gamewon_text1 = font2.render('Game Won!!!', True, 'yellow')
+        gamewon_text2 = font.render('Aperte [espaço] para recomeçar!', True, 'yellow')
+        gamewon_rect1 = gamewon_text1.get_rect(center=(900 // 2, 850 // 2))
+        gamewon_rect2 = gamewon_text2.get_rect(center=(900 // 2, 950 // 2))
+        screen.blit(gamewon_text1, gamewon_rect1)
+        screen.blit(gamewon_text2, gamewon_rect2)
 
 def check_collisions(scor, power, power_count, eaten_inimigo):
     cell_height = (HEIGHT - 50)  // 32
