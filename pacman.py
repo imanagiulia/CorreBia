@@ -26,10 +26,10 @@ PI = math.pi
 player_images = []
 for i in range (1, 3):
     player_images.append(pygame.transform.scale(pygame.image.load(f'assets/{i}.png'), (45, 45)))
-nuvem_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/nuvem.png'), (45, 45))
-redes_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/redes.png'), (45, 45))
-computacional_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/computacional.png'), (45, 45))
-operacional_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/operacional.png'), (45, 45))
+cloudius_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/nuvem.png'), (45, 45))
+ping_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/redes.png'), (45, 45))
+glitch_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/computacional.png'), (45, 45))
+kernel_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/operacional.png'), (45, 45))
 check_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/check.png'), (45, 45))
 turbo_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/turbo.png'), (45, 45))
 
@@ -77,13 +77,13 @@ class Inimigo:
         self.running = True
 
         if id == 0:
-            self.thread = threading.Thread(target=self.run_nuvem_thread)
+            self.thread = threading.Thread(target=self.run_cloudius_thread)
         elif id == 1:
-            self.thread = threading.Thread(target=self.run_redes_thread)
+            self.thread = threading.Thread(target=self.run_ping_thread)
         elif id == 2:
-            self.thread = threading.Thread(target=self.run_computacional_thread)
+            self.thread = threading.Thread(target=self.run_glitch_thread)
         elif id == 3:
-            self.thread = threading.Thread(target=self.run_operacional_thread)
+            self.thread = threading.Thread(target=self.run_kernel_thread)
 
 
         self.thread.daemon = True
@@ -152,46 +152,46 @@ class Inimigo:
 
         return turns
 
-    def run_nuvem_thread(self):
+    def run_cloudius_thread(self):
         while self.running:
             time.sleep(0.02)
             with inimigo_lock:
                 if moving and not game_over and not game_won:
                     self.turns = self.check_turns()
                 if not self.dead and not self.in_box:
-                    self.move_nuvem()
+                    self.move_cloudius()
                 else:
-                    self.move_operacional() # voltar para a caixa quando tá morto
+                    self.move_kernel() # voltar para a caixa quando tá morto
 
-    def run_redes_thread(self):
+    def run_ping_thread(self):
         while self.running:
             time.sleep(0.02)
             with inimigo_lock:
                 if moving and not game_over and not game_won:
                     self.turns = self.check_turns()
                 if not self.dead and not self.in_box:
-                    self.move_redes()
+                    self.move_ping()
                 else:
-                    self.move_operacional() # voltar para a caixa quando tá morto
+                    self.move_kernel() # voltar para a caixa quando tá morto
 
-    def run_computacional_thread(self):
+    def run_glitch_thread(self):
         while self.running:
             time.sleep(0.02)
             with inimigo_lock:
                 if moving and not game_over and not game_won:
                     self.turns = self.check_turns()
                 if not self.dead and not self.in_box:
-                    self.move_computacional()
+                    self.move_glitch()
                 else:
-                    self.move_operacional() # voltar para a caixa quando tá morto
+                    self.move_kernel() # voltar para a caixa quando tá morto
 
-    def run_operacional_thread(self):
+    def run_kernel_thread(self):
         while self.running:
             time.sleep(0.02)
             with inimigo_lock:
                 if moving and not game_over and not game_won:
                     self.turns = self.check_turns()
-                    self.move_operacional()
+                    self.move_kernel()
 
     def update_target(self, player_x, player_y):
         with inimigo_lock:
@@ -200,15 +200,15 @@ class Inimigo:
 
     def update_position(self):
         if self.id == 0:
-            self.x_pos, self.y_pos, self.direction = self.move_nuvem()
+            self.x_pos, self.y_pos, self.direction = self.move_cloudius()
         elif self.id == 1:
-            self.x_pos, self.y_pos, self.direction = self.move_redes()
+            self.x_pos, self.y_pos, self.direction = self.move_ping()
         elif self.id == 2:
-            self.x_pos, self.y_pos, self.direction = self.move_computacional()
+            self.x_pos, self.y_pos, self.direction = self.move_glitch()
         elif self.id == 3:
-            self.x_pos, self.y_pos, self.direction = self.move_operacional()
+            self.x_pos, self.y_pos, self.direction = self.move_kernel()
 
-    def move_operacional(self): # vira sempre que for vantajoso para perseguição
+    def move_kernel(self): # vira sempre que for vantajoso para perseguição
         #semáforo
         self.center_x = self.x_pos + 22
         self.center_y = self.y_pos + 22
@@ -250,7 +250,7 @@ class Inimigo:
         elif self.x_pos > WIDTH - 15:
             self.x_pos = -25
 
-    def move_nuvem(self): # vira sempre que colidir com paredes, caso contrário continua reto
+    def move_cloudius(self): # vira sempre que colidir com paping, caso contrário continua reto
      # D, E, C, B
 
      self.center_x = self.x_pos + 22
@@ -266,7 +266,7 @@ class Inimigo:
      elif self.direction == 3 and self.turns[3]:  # baixo
          self.y_pos += self.speed
      else:
-         # Colidiu com parede — precisa virar
+         # Colidiu com papin — precisa virar
          new_direction = False
          for i in range(4):
              if self.turns[i]:
@@ -290,7 +290,7 @@ class Inimigo:
      elif self.x_pos > 900:
          self.x_pos -= 30
 
-    def move_redes(self): # vira para cima ou para baixo qualquer momento para perseguir, mas para esquerda ou para direita somente em colisões
+    def move_ping(self): # vira para cima ou para baixo qualquer momento para perseguir, mas para esquerda ou para direita somente em colisões
         self.center_x = self.x_pos + 22
         self.center_y = self.y_pos + 22
 
@@ -326,7 +326,7 @@ class Inimigo:
         elif self.x_pos > WIDTH - 15:
             self.x_pos = -25
 
-    def move_computacional(self): # vira para a esquera ou para a direita sempre que for vantajoso para perseguição, mas para cima ou para baixo apenas em cplisões
+    def move_glitch(self): # vira para a esquera ou para a direita sempre que for vantajoso para perseguição, mas para cima ou para baixo apenas em cplisões
         # D, E, C, B
         self.center_x = self.x_pos + 22
         self.center_y = self.y_pos + 22
@@ -566,95 +566,95 @@ def get_targets(player_x, player_y):
     runaway_y = 900 if player_y < 450 else 0
     return_target = (380, 400)
 
-    nuve_target = (0,0)
-    rede_target = (0,0)
-    compu_target = (0,0)
-    opera_target = (0,0)
+    cloudiu_target = (0,0)
+    pin_target = (0,0)
+    glitc_target = (0,0)
+    kerne_target = (0,0)
 
     if powerup:
-        if not nuvem.dead and not eaten_inimigo[0]:
-            nuve_target = (runaway_x, runaway_y)
-        elif not nuvem.dead and eaten_inimigo[0]:
-            if 340 < nuvem.x_pos < 560 and 340 < nuvem.y_pos < 500:
-                nuve_target = (400, 100)
+        if not cloudius.dead and not eaten_inimigo[0]:
+            cloudiu_target = (runaway_x, runaway_y)
+        elif not cloudius.dead and eaten_inimigo[0]:
+            if 340 < cloudius.x_pos < 560 and 340 < cloudius.y_pos < 500:
+                cloudiu_target = (400, 100)
             else:
-                nuve_target = (player_x, player_y)
+                cloudiu_target = (player_x, player_y)
         else:
-            nuve_target = return_target
+            cloudiu_target = return_target
     else:
-        if not nuvem.dead:
-            if 340 < nuvem.x_pos < 560 and 340 < nuvem.y_pos < 500:
-                nuve_target = (400, 100)
+        if not cloudius.dead:
+            if 340 < cloudius.x_pos < 560 and 340 < cloudius.y_pos < 500:
+                cloudiu_target = (400, 100)
             else:
-                nuve_target = (player_x, player_y)
+                cloudiu_target = (player_x, player_y)
         else:
-            nuve_target = return_target
+            cloudiu_target = return_target
 
 
     if powerup:
-        if not redes.dead and not eaten_inimigo[1]:
-            rede_target = (runaway_x, player_y)
-        elif not redes.dead and eaten_inimigo[1]:
-            if 340 < redes.x_pos < 560 and 340 < redes.y_pos < 500:
-                rede_target = (400, 100)
+        if not ping.dead and not eaten_inimigo[1]:
+            pin_target = (runaway_x, player_y)
+        elif not ping.dead and eaten_inimigo[1]:
+            if 340 < ping.x_pos < 560 and 340 < ping.y_pos < 500:
+                pin_target = (400, 100)
             else:
-                rede_target = (player_x, player_y)
+                pin_target = (player_x, player_y)
         else:
-            rede_target = return_target
+            pin_target = return_target
     else:
-        if not redes.dead:
-            if 340 < redes.x_pos < 560 and 340 < redes.y_pos < 500:
-                rede_target = (400, 100)
+        if not ping.dead:
+            if 340 < ping.x_pos < 560 and 340 < ping.y_pos < 500:
+                pin_target = (400, 100)
             else:
-                rede_target = (player_x + 100, player_y - 100)
+                pin_target = (player_x + 100, player_y - 100)
         else:
-            rede_target = return_target
+            pin_target = return_target
 
     if powerup:
-        if not computacional.dead and not eaten_inimigo[2]:
-            compu_target = (player_x, runaway_y)
-        elif not computacional.dead and eaten_inimigo[2]:
-            if 340 < computacional.x_pos < 560 and 340 < computacional.y_pos < 500:
-                compu_target = (400, 100)
+        if not glitch.dead and not eaten_inimigo[2]:
+            glitc_target = (player_x, runaway_y)
+        elif not glitch.dead and eaten_inimigo[2]:
+            if 340 < glitch.x_pos < 560 and 340 < glitch.y_pos < 500:
+                glitc_target = (400, 100)
             else:
-                compu_target = (player_x, player_y)
+                glitc_target = (player_x, player_y)
         else:
-            compu_target = return_target
+            glitc_target = return_target
     else:
-        if not computacional.dead:
-            if 340 < computacional.x_pos < 560 and 340 < computacional.y_pos < 500:
-                compu_target = (400, 100)
+        if not glitch.dead:
+            if 340 < glitch.x_pos < 560 and 340 < glitch.y_pos < 500:
+                glitc_target = (400, 100)
             else:
-                compu_target = (player_x - 150, player_y + 50)
+                glitc_target = (player_x - 150, player_y + 50)
         else:
-            compu_target = return_target
+            glitc_target = return_target
 
     if powerup:
-        if not operacional.dead and not eaten_inimigo[3]:
-            opera_target = (450, 450)
-        elif not operacional.dead and eaten_inimigo[3]:
-            if 340 < operacional.x_pos < 560 and 340 < operacional.y_pos < 500:
-                opera_target = (400, 100)
+        if not kernel.dead and not eaten_inimigo[3]:
+            kerne_target = (450, 450)
+        elif not kernel.dead and eaten_inimigo[3]:
+            if 340 < kernel.x_pos < 560 and 340 < kernel.y_pos < 500:
+                kerne_target = (400, 100)
             else:
-                opera_target = (player_x, player_y)
+                kerne_target = (player_x, player_y)
         else:
-            opera_target = return_target
+            kerne_target = return_target
     else:
-        if not operacional.dead:
-            if 340 < operacional.x_pos < 560 and 340 < operacional.y_pos < 500:
-                opera_target = (400, 100)
+        if not kernel.dead:
+            if 340 < kernel.x_pos < 560 and 340 < kernel.y_pos < 500:
+                kerne_target = (400, 100)
             else:
-                opera_target = (player_x - 150, player_y + 50)
+                kerne_target = (player_x - 150, player_y + 50)
         else:
-            opera_target = return_target
+            kerne_target = return_target
 
-    return [nuve_target, rede_target, compu_target, opera_target]
+    return [cloudiu_target, pin_target, glitc_target, kerne_target]
 
 
-nuvem = Inimigo(56, 58 , targets[0], inimigo_speeds[0], nuvem_img, 0, False, False, 0)
-redes = Inimigo(400, 438, targets[1], inimigo_speeds[1], redes_img, 1, False, False, 1)
-computacional = Inimigo(400, 438, targets[2], inimigo_speeds[2], computacional_img, 2, False, False, 2)
-operacional = Inimigo(400, 438, targets[3], inimigo_speeds[3], operacional_img, 3, False, False, 3)
+cloudius = Inimigo(56, 58 , targets[0], inimigo_speeds[0], cloudius_img, 0, False, False, 0)
+ping = Inimigo(400, 438, targets[1], inimigo_speeds[1], ping_img, 1, False, False, 1)
+glitch = Inimigo(400, 438, targets[2], inimigo_speeds[2], glitch_img, 2, False, False, 2)
+kernel = Inimigo(400, 438, targets[3], inimigo_speeds[3], kernel_img, 3, False, False, 3)
 
 run = True
 
@@ -690,24 +690,24 @@ while run:
 
     #velocidades
     if powerup:
-        nuvem.speed = 1
-        redes.speed = 1
-        computacional.speed = 1
-        operacional.speed = 1
+        cloudius.speed = 1
+        ping.speed = 1
+        glitch.speed = 1
+        kernel.speed = 1
     else:
-        nuvem.speed = 2
-        redes.speed = 2
-        computacional.speed = 2
-        operacional.speed = 2
+        cloudius.speed = 2
+        ping.speed = 2
+        glitch.speed = 2
+        kernel.speed = 2
 
     if eaten_inimigo[0]:
-        nuvem.speed = 4
+        cloudius.speed = 4
     if eaten_inimigo[1]:
-        nuvem.speed = 4
+        cloudius.speed = 4
     if eaten_inimigo[2]:
-        nuvem.speed = 4
+        cloudius.speed = 4
     if eaten_inimigo[3]:
-        nuvem.speed = 4
+        cloudius.speed = 4
 
     game_won = True
     for i in range(len(level)):
@@ -718,18 +718,18 @@ while run:
     draw_player()
 
     target_atual = get_targets(player_x, player_y)
-    nuvem.target = target_atual[0]
-    redes.target = target_atual[1]
-    computacional.target = target_atual[2]
-    operacional.target = target_atual[3]
+    cloudius.target = target_atual[0]
+    ping.target = target_atual[1]
+    glitch.target = target_atual[2]
+    kernel.target = target_atual[3]
 
     turns_allowed = check_position(center_x, center_y)
 
     with inimigo_lock:
-        nuvem.rect = nuvem.draw()
-        redes.rect = redes.draw()
-        computacional.rect = computacional.draw()
-        operacional.rect = operacional.draw()
+        cloudius.rect = cloudius.draw()
+        ping.rect = ping.draw()
+        glitch.rect = glitch.draw()
+        kernel.rect = kernel.draw()
 
     draw_alter()
 
@@ -739,7 +739,7 @@ while run:
     score, powerup, powerup_count, eaten_inimigo = check_collisions(score, powerup, powerup_count, eaten_inimigo)
 
     if not powerup:
-        if (player_circle.colliderect(nuvem.rect) and not nuvem.dead) or (player_circle.colliderect(redes.rect) and not redes.dead) or (player_circle.colliderect(operacional.rect) and not operacional.dead) or (player_circle.colliderect(computacional.rect) and not computacional.dead):
+        if (player_circle.colliderect(cloudius.rect) and not cloudius.dead) or (player_circle.colliderect(ping.rect) and not ping.dead) or (player_circle.colliderect(kernel.rect) and not kernel.dead) or (player_circle.colliderect(glitch.rect) and not glitch.dead):
             if lives > 0:
                 lives -= 1
                 startup_counter = 0
@@ -749,53 +749,53 @@ while run:
                 player_y = 663
                 direction = 0
                 direction_command = 0
-                nuvem.x_pos = 56
-                nuvem.y_pos = 58
-                nuvem.direction = 0
-                redes.x_pos = 400
-                redes.y_pos = 438
-                redes.direction = 2
-                computacional.x_pos = 440
-                computacional.y_pos = 438
-                computacional.direction = 2
-                operacional.x_pos = 440
-                operacional.y_pos = 438
-                operacional.direction = 2
+                cloudius.x_pos = 56
+                cloudius.y_pos = 58
+                cloudius.direction = 0
+                ping.x_pos = 400
+                ping.y_pos = 438
+                ping.direction = 2
+                glitch.x_pos = 440
+                glitch.y_pos = 438
+                glitch.direction = 2
+                kernel.x_pos = 440
+                kernel.y_pos = 438
+                kernel.direction = 2
                 eaten_inimigo = [False, False, False, False]
-                nuvem.dead = False
-                redes.dead = False
-                computacional.dead = False
-                operacional.dead = False
+                cloudius.dead = False
+                ping.dead = False
+                glitch.dead = False
+                kernel.dead = False
             else:
                 game_over = True
                 moving = False
                 startup_counter = 0
 
     if powerup:
-        if player_circle.colliderect(nuvem.rect) and not nuvem.dead and not eaten_inimigo[0]:
-            nuvem.dead = True
+        if player_circle.colliderect(cloudius.rect) and not cloudius.dead and not eaten_inimigo[0]:
+            cloudius.dead = True
             eaten_inimigo[0] = True
             score += (2 * eaten_inimigo.count(True)) * 100
-        if player_circle.colliderect(redes.rect) and not redes.dead and not eaten_inimigo[1]:
-            redes.dead = True
+        if player_circle.colliderect(ping.rect) and not ping.dead and not eaten_inimigo[1]:
+            ping.dead = True
             eaten_inimigo[1] = True
             score += (2 * eaten_inimigo.count(True)) * 100
-        if player_circle.colliderect(computacional.rect) and not computacional.dead and not eaten_inimigo[2]:
-            computacional.dead = True
+        if player_circle.colliderect(glitch.rect) and not glitch.dead and not eaten_inimigo[2]:
+            glitch.dead = True
             eaten_inimigo[2] = True
             score += (2 * eaten_inimigo.count(True)) * 100
-        if player_circle.colliderect(operacional.rect) and not operacional.dead and not eaten_inimigo[3]:
-            operacional.dead = True
+        if player_circle.colliderect(kernel.rect) and not kernel.dead and not eaten_inimigo[3]:
+            kernel.dead = True
             eaten_inimigo[3] = True
             score += (2 * eaten_inimigo.count(True)) * 100
 
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            nuvem.running = False
-            redes.running = False
-            computacional.running = False
-            operacional.running = False
+            cloudius.running = False
+            ping.running = False
+            glitch.running = False
+            kernel.running = False
             run = False
 
         if event.type == pygame.KEYDOWN:
@@ -816,23 +816,23 @@ while run:
                 player_y = 663
                 direction = 0
                 direction_command = 0
-                nuvem.x_pos = 56
-                nuvem.y_pos = 58
-                nuvem.direction = 0
-                redes.x_pos = 400
-                redes.y_pos = 438
-                redes.direction = 2
-                computacional.x_pos = 440
-                computacional.y_pos = 438
-                computacional.direction = 2
-                operacional.x_pos = 440
-                operacional.y_pos = 438
-                operacional.direction = 2
+                cloudius.x_pos = 56
+                cloudius.y_pos = 58
+                cloudius.direction = 0
+                ping.x_pos = 400
+                ping.y_pos = 438
+                ping.direction = 2
+                glitch.x_pos = 440
+                glitch.y_pos = 438
+                glitch.direction = 2
+                kernel.x_pos = 440
+                kernel.y_pos = 438
+                kernel.direction = 2
                 eaten_inimigo = [False, False, False, False]
-                nuvem.dead = False
-                redes.dead = False
-                computacional.dead = False
-                operacional.dead = False
+                cloudius.dead = False
+                ping.dead = False
+                glitch.dead = False
+                kernel.dead = False
                 score = 0
                 level = copy.deepcopy(boards)
                 game_over = False
@@ -859,25 +859,25 @@ while run:
         player_x = WIDTH - 45
 
 
-    if nuvem.dead and nuvem.in_box:
-        nuvem.dead = False
-    if redes.dead and redes.in_box:
-        redes.dead = False
-    if computacional.dead and computacional.in_box:
-        computacional.dead = False
-    if operacional.dead and operacional.in_box:
-        operacional.dead = False
+    if cloudius.dead and cloudius.in_box:
+        cloudius.dead = False
+    if ping.dead and ping.in_box:
+        ping.dead = False
+    if glitch.dead and glitch.in_box:
+        glitch.dead = False
+    if kernel.dead and kernel.in_box:
+        kernel.dead = False
 
     pygame.display.flip()
 
-nuvem.running = False
-redes.running = False
-computacional.running = False
-operacional.running = False
+cloudius.running = False
+ping.running = False
+glitch.running = False
+kernel.running = False
 
-nuvem.thread.join()
-redes.thread.join()
-computacional.thread.join()
-operacional.thread.join()
+cloudius.thread.join()
+ping.thread.join()
+glitch.thread.join()
+kernel.thread.join()
 
 pygame.quit()
