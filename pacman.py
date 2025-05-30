@@ -76,6 +76,16 @@ class Inimigo:
         self.rect = pygame.Rect(self.x_pos, self.y_pos, 45, 45)
         self.running = True
 
+        self.box_center_x = 450
+        self.box_center_y = 438
+
+        box_xmax, box_xmin = 350,550
+        box_ymax, box_ymin = 370,480
+        initialy_in_box = (box_xmin <= self.x_pos < box_xmax and box_ymin < self.y_pos < box_ymax)
+
+        self.left_box = (id == 0)
+
+
         if id == 0:
             self.thread = threading.Thread(target=self.run_cloudius_thread)
         elif id == 1:
@@ -108,10 +118,18 @@ class Inimigo:
         linha = max(0, min(int((self.y_pos + 22) // cell_h), len(level) - 1))
         coluna = max(0, min(int((self.x_pos + 22) // cell_w), len(level[0]) - 1))
 
-        if 350 <= self.x_pos < 550 and 370 < self.y_pos < 480:
+        box_xmin, box_xmax = 350, 550
+        box_ymin, box_ymax = 370, 480
+
+        is_in_box = (box_xmin <= self.x_pos < box_xmax and box_ymin < self.y_pos < box_ymax)
+
+        if is_in_box:
             self.in_box = True
+            if self.dead:
+                self.left_box = False
         else:
             self.in_box = False
+            self.left_box = True
 
         return self.check_turns()
 
@@ -152,46 +170,86 @@ class Inimigo:
 
         return turns
 
+    def move_to_box(self):
+        target_x, target_y = self.box_center_x, self.box_center_y
+
+        if abs(self.x_pos - target_x) > self.speed:
+            if self.x_pos < target_x:
+                self.x_pos += self.speed
+            elif self.x_pos > target_x:
+                self.x_pos -= self.speed
+        else:
+            self.x_pos = target_x
+
+        if abs(self.y_pos - target_y) > self.speed:
+            if self.y_pos < target_y:
+                self.y_pos += self.speed
+            elif self.y_pos > target_y:
+                self.y_pos -= self.speed
+        else:
+            self.y_pos = target_y
+
+    def move_out_box(self):
+        exit_y = 350
+        if self.y_pos > exit_y and self.turns[2]:
+            self.y_pos -= self.speed
+            self.direction = 2
+        elif self.y_pos <+ exit_y:
+            self.in_box = False
+            self.left_box = True
+
+
     def run_cloudius_thread(self):
         while self.running:
             time.sleep(0.02)
             with inimigo_lock:
                 if moving and not game_over and not game_won:
-                    self.turns = self.check_turns()
-                if not self.dead and not self.in_box:
-                    self.move_cloudius()
+                    self.turns = self.check_collisions()
+                if self.dead:
+                    self.move_to_box()
+                elif self.in_box:
+                    self.move_out_box()
                 else:
-                    self.move_kernel() # voltar para a caixa quando tá morto
+                    self.move_cloudius()
 
     def run_ping_thread(self):
         while self.running:
             time.sleep(0.02)
             with inimigo_lock:
                 if moving and not game_over and not game_won:
-                    self.turns = self.check_turns()
-                if not self.dead and not self.in_box:
-                    self.move_ping()
-                else:
-                    self.move_kernel() # voltar para a caixa quando tá morto
+                    self.turns = self.check_collisions()
+                    if self.dead:
+                        self.move_to_box()
+                    elif self.in_box:
+                        self.move_out_box()
+                    else:
+                        self.move_ping()
 
     def run_glitch_thread(self):
         while self.running:
             time.sleep(0.02)
             with inimigo_lock:
                 if moving and not game_over and not game_won:
-                    self.turns = self.check_turns()
-                if not self.dead and not self.in_box:
-                    self.move_glitch()
+                    self.turns = self.check_collisions()
+                if self.dead:
+                    self.move_to_box()
+                elif self.in_box:
+                    self.move_out_box()
                 else:
-                    self.move_kernel() # voltar para a caixa quando tá morto
+                    self.move_glitch() # voltar para a caixa quando tá morto
 
     def run_kernel_thread(self):
         while self.running:
             time.sleep(0.02)
             with inimigo_lock:
                 if moving and not game_over and not game_won:
-                    self.turns = self.check_turns()
-                    self.move_kernel()
+                    self.turns = self.check_collisions()
+                    if self.dead:
+                        self.move_to_box()
+                    elif self.in_box:
+                        self.move_out_box()
+                    else:
+                        self.move_kernel()
 
     def update_target(self, player_x, player_y):
         with inimigo_lock:
@@ -213,6 +271,20 @@ class Inimigo:
         self.center_x = self.x_pos + 22
         self.center_y = self.y_pos + 22
 
+        target_x, target_y = self.target
+        if self.dead:
+            if self.x_pos < target_x:
+                self.x_pos += self.speed
+            elif self.x_pos > target_x:
+                self.x_pos -= self.speed
+
+            if self.y_pos < target_y:
+                self.y_pos += self.speed
+            elif self.y_pos > target_y:
+                self.y_pos -= self.speed
+
+            return
+
         dx = self.target[0] - self.x_pos
         dy = self.target[1] - self.y_pos
          # D, E, C, B
@@ -230,6 +302,19 @@ class Inimigo:
             elif dy < 0 and self.turns[2]:
                 self.y_pos -= self.speed
                 self.direction = 2
+            else:
+                for i in range(4):
+                    if self.turns[i]:
+                        self.direction = i
+                        if self.direction == 0:
+                            self.x_pos += self.speed
+                        elif self.direction == 1:
+                            self.x_pos -= self.speed
+                        elif self.direction == 2:
+                            self.y_pos -= self.speed
+                        elif direction == 3:
+                            self.y_pos += self.speed
+                        break
         else: # mov vertical
             if dy > 0 and self.turns[3]:
                 self.y_pos += self.speed
@@ -303,23 +388,25 @@ class Inimigo:
         elif dy < 0 and self.turns[2]:
             self.y_pos -= self.speed
             self.direction = 2
-        elif self.direction == 0 and self.turns[0]:
+        elif dx > 0 and self.turns[0]:
             self.x_pos += self.speed
-        elif self.direction == 1 and self.turns[1]:
+            self.direction = 0
+        elif dx < 0 and self.turns[1]:
             self.x_pos -= self.speed
+            self.direction = 1
         else:
-            if dx > 0 and self.turns[0]:
-                self.x_pos += self.speed
-                self.direction = 0
-            elif dx < 0 and self.turns[1]:
-                self.x_pos -= self.speed
-                self.direction = 1
-            elif dy > 0 and self.turns[3]:
-                self.y_pos += self.speed
-                self.direction = 3
-            elif dy < 0 and self.turns[2]:
-                self.y_pos -= self.speed
-                self.direction = 2
+            for i in range(4):
+                if self.turns[i]:
+                    self.direction = i
+                    if self.direction == 0:
+                        self.x_pos += self.speed
+                    elif self.direction == 1:
+                        self.x_pos -= self.speed
+                    elif self.direction == 2:
+                        self.y_pos -= self.speed
+                    elif direction == 3:
+                        self.y_pos += self.speed
+                    break
 
         if self.x_pos < -30:
             self.x_pos = WIDTH - 45
@@ -340,23 +427,25 @@ class Inimigo:
         elif dx < 0 and self.turns[1]:
             self.x_pos -= self.speed
             self.direction = 1
-        elif self.direction == 2  and self.turns[2]:
-            self.y_pos -= self.speed
-        elif self.direction == 3  and self.turns[3]:
+        elif dy > 0  and self.turns[3]:
             self.y_pos += self.speed
+            self.direction = 3
+        elif dy < 0  and self.turns[2]:
+            self.y_pos -= self.speed
+            self.direction = 2
         else:
-            if dy > 0 and self.turns[3]:
-                self.y_pos += self.speed
-                self.direction = 3
-            elif dy < 0 and self.turns[2]:
-                self.y_pos -= self.speed
-                self.direction = 2
-            elif dx > 0 and self.turns[0]:
-                self.x_pos += self.speed
-                self.direction = 0
-            elif dx < 0 and self.turns[1]:
-                self.x_pos -= self.speed
-                self.direction = 1
+            for i in range(4):
+                if self.turns[i]:
+                    self.direction = i
+                    if self.direction == 0:
+                        self.x_pos += self.speed
+                    elif self.direction == 1:
+                        self.x_pos -= self.speed
+                    elif self.direction == 2:
+                        self.y_pos -= self.speed
+                    elif direction == 3:
+                        self.y_pos += self.speed
+                    break
 
         if self.x_pos < -30:
             self.x_pos = WIDTH - 45
@@ -593,7 +682,7 @@ def get_targets(player_x, player_y):
 
     if powerup:
         if not ping.dead and not eaten_inimigo[1]:
-            pin_target = (runaway_x, player_y)
+            pin_target = (runaway_x, runaway_y)
         elif not ping.dead and eaten_inimigo[1]:
             if 340 < ping.x_pos < 560 and 340 < ping.y_pos < 500:
                 pin_target = (400, 100)
@@ -631,7 +720,7 @@ def get_targets(player_x, player_y):
 
     if powerup:
         if not kernel.dead and not eaten_inimigo[3]:
-            kerne_target = (450, 450)
+            kerne_target = (runaway_x, runaway_y)
         elif not kernel.dead and eaten_inimigo[3]:
             if 340 < kernel.x_pos < 560 and 340 < kernel.y_pos < 500:
                 kerne_target = (400, 100)
@@ -766,6 +855,10 @@ while run:
                 ping.dead = False
                 glitch.dead = False
                 kernel.dead = False
+                cloudius.left_box = True
+                ping.left_box = False
+                glitch.left_box = False
+                kernel.left_box = False
             else:
                 game_over = True
                 moving = False
@@ -837,6 +930,10 @@ while run:
                 level = copy.deepcopy(boards)
                 game_over = False
                 game_won = False
+                cloudius.left_box = True
+                ping.left_box = False
+                glitch.left_box = False
+                kernel.left_box = False
 
 
     if event.type == pygame.KEYUP:
