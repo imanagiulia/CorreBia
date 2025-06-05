@@ -8,10 +8,10 @@ import math
 pygame.init()
 inimigo_lock = threading.Lock()
 
-#confi jogo
-# tamanho do "console" do jogo
-WIDTH = 900
-HEIGHT = 950
+# Configurações do jogo
+# Tamanho do "console" do jogo
+WIDTH = 800  # Largura ajustada
+HEIGHT = 790 # Altura ajustada
 screen = pygame.display.set_mode([WIDTH, HEIGHT])
 timer = pygame.time.Clock()
 fps = 60
@@ -22,7 +22,7 @@ level = copy.deepcopy(boards)
 color = 'orange'
 PI = math.pi
 
-#imgs
+# Imagens
 player_images = []
 for i in range (1, 3):
     player_images.append(pygame.transform.scale(pygame.image.load(f'assets/{i}.png'), (45, 45)))
@@ -33,22 +33,22 @@ kernel_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/operacio
 check_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/check.png'), (45, 45))
 turbo_img = pygame.transform.scale(pygame.image.load(f'assets/inimigos/turbo.png'), (45, 45))
 
-#variaveis player
-# posição inicial Bia
-player_x = 450
-player_y = 663
+# Variáveis do jogador
+# Posição inicial Bia - ajustada para o novo WIDTH e HEIGHT
+player_x = WIDTH // 2
+player_y = int(650 * (HEIGHT / 950)) # Calculado proporcionalmente à altura original
 direction = 0
 direction_command = 0
 player_speed = 3
 counter = 0
 flicker = 0
 
-# variaveis inimigos
+# Variáveis inimigos
 inimigo_speeds = [2, 2, 2, 2]
 eaten_inimigo = [False, False, False, False]
 targets = [(player_x, player_y), (player_x, player_y), (player_x, player_y), (player_x, player_y)]
 
-# defi jogo
+# Definições do jogo
 score = 0
 powerup = False
 powerup_count = 0
@@ -76,15 +76,19 @@ class Inimigo:
         self.rect = pygame.Rect(self.x_pos, self.y_pos, 45, 45)
         self.running = True
 
-        self.box_center_x = 450
-        self.box_center_y = 438
+        # Posição central da caixa dos inimigos, ajustada para o novo HEIGHT
+        self.box_center_x = WIDTH // 2
+        self.box_center_y = HEIGHT // 2 + 50 # Ajustado para manter centralizado na área de jogo
 
-        box_xmax, box_xmin = 350,550
-        box_ymax, box_ymin = 370,480
-        initialy_in_box = (box_xmin <= self.x_pos < box_xmax and box_ymin < self.y_pos < box_ymax)
+        # Limites da caixa dos inimigos, ajustados proporcionalmente
+        box_width = 200
+        box_height = 110
+        self.box_xmin = self.box_center_x - box_width // 2
+        self.box_xmax = self.box_center_x + box_width // 2
+        self.box_ymin = self.box_center_y - box_height // 2
+        self.box_ymax = self.box_center_y + box_height // 2
 
-        self.left_box = (id == 0)
-
+        self.left_box = (id == 0) # Cloudius começa fora da caixa
 
         if id == 0:
             self.thread = threading.Thread(target=self.run_cloudius_thread)
@@ -94,7 +98,6 @@ class Inimigo:
             self.thread = threading.Thread(target=self.run_glitch_thread)
         elif id == 3:
             self.thread = threading.Thread(target=self.run_kernel_thread)
-
 
         self.thread.daemon = True
         self.thread.start()
@@ -113,15 +116,14 @@ class Inimigo:
         self.center_x = self.x_pos + 22
         self.center_y = self.y_pos + 22
 
+        # Calcula a altura e largura da célula com base nas novas dimensões
         cell_h = (HEIGHT - 50) // 32
         cell_w = WIDTH // 30
         linha = max(0, min(int((self.y_pos + 22) // cell_h), len(level) - 1))
         coluna = max(0, min(int((self.x_pos + 22) // cell_w), len(level[0]) - 1))
 
-        box_xmin, box_xmax = 350, 550
-        box_ymin, box_ymax = 370, 480
-
-        is_in_box = (box_xmin <= self.x_pos < box_xmax and box_ymin < self.y_pos < box_ymax)
+        # Ajusta os limites da caixa dos inimigos
+        is_in_box = (self.box_xmin <= self.x_pos < self.box_xmax and self.box_ymin < self.y_pos < self.box_ymax)
 
         if is_in_box:
             self.in_box = True
@@ -134,6 +136,7 @@ class Inimigo:
         return self.check_turns()
 
     def check_turns(self):
+        # Calcula a altura e largura da célula com base nas novas dimensões
         cell_height = (HEIGHT - 50) // 32
         cell_width = WIDTH // 30
         margem = 15
@@ -190,11 +193,11 @@ class Inimigo:
             self.y_pos = target_y
 
     def move_out_box(self):
-        exit_y = 350
+        exit_y = self.box_ymin - 50 # Ajustado para sair da caixa
         if self.y_pos > exit_y and self.turns[2]:
             self.y_pos -= self.speed
             self.direction = 2
-        elif self.y_pos <+ exit_y:
+        elif self.y_pos <= exit_y: # Usar <= para garantir que ele passe do limite
             self.in_box = False
             self.left_box = True
 
@@ -254,7 +257,7 @@ class Inimigo:
     def update_target(self, player_x, player_y):
         with inimigo_lock:
             self.target = (player_x, player_y)
-            print(f"Inimigo {self.id} target atualizado para {self.target}")
+            # print(f"Inimigo {self.id} target atualizado para {self.target}") # Comentar para evitar spam no console
 
     def update_position(self):
         if self.id == 0:
@@ -312,7 +315,7 @@ class Inimigo:
                             self.x_pos -= self.speed
                         elif self.direction == 2:
                             self.y_pos -= self.speed
-                        elif direction == 3:
+                        elif self.direction == 3: # Correção: usar self.direction aqui
                             self.y_pos += self.speed
                         break
         else: # mov vertical
@@ -329,7 +332,7 @@ class Inimigo:
                 self.x_pos -= self.speed
                 self.direction = 1
 
-        #teletranspote tunel
+        #teletransporte túnel (ajustado para o novo WIDTH)
         if self.x_pos < -30:
             self.x_pos = WIDTH - 45
         elif self.x_pos > WIDTH - 15:
@@ -369,10 +372,10 @@ class Inimigo:
             elif self.direction == 3:
                  self.y_pos += self.speed
 
-         # Teleporte horizontal (túnel)
+         # Teleporte horizontal (túnel) (ajustado para o novo WIDTH)
      if self.x_pos < -30:
-         self.x_pos = 900
-     elif self.x_pos > 900:
+         self.x_pos = WIDTH
+     elif self.x_pos > WIDTH:
          self.x_pos -= 30
 
     def move_ping(self): # vira para cima ou para baixo qualquer momento para perseguir, mas para esquerda ou para direita somente em colisões
@@ -404,16 +407,17 @@ class Inimigo:
                         self.x_pos -= self.speed
                     elif self.direction == 2:
                         self.y_pos -= self.speed
-                    elif direction == 3:
+                    elif self.direction == 3: # Correção: usar self.direction aqui
                         self.y_pos += self.speed
                     break
 
+        # Teleporte túnel (ajustado para o novo WIDTH)
         if self.x_pos < -30:
             self.x_pos = WIDTH - 45
         elif self.x_pos > WIDTH - 15:
             self.x_pos = -25
 
-    def move_glitch(self): # vira para a esquera ou para a direita sempre que for vantajoso para perseguição, mas para cima ou para baixo apenas em cplisões
+    def move_glitch(self): # vira para a esquerda ou para a direita sempre que for vantajoso para perseguição, mas para cima ou para baixo apenas em colisões
         # D, E, C, B
         self.center_x = self.x_pos + 22
         self.center_y = self.y_pos + 22
@@ -443,10 +447,11 @@ class Inimigo:
                         self.x_pos -= self.speed
                     elif self.direction == 2:
                         self.y_pos -= self.speed
-                    elif direction == 3:
+                    elif self.direction == 3: # Correção: usar self.direction aqui
                         self.y_pos += self.speed
                     break
 
+        # Teleporte túnel (ajustado para o novo WIDTH)
         if self.x_pos < -30:
             self.x_pos = WIDTH - 45
         elif self.x_pos > WIDTH - 15:
@@ -456,34 +461,35 @@ class Inimigo:
 
 def draw_alter():
     score_text = font.render(f'Score: {score}', True, 'white')
-    screen.blit(score_text, (10, 720))
+    screen.blit(score_text, (10, HEIGHT - 30)) # Ajustado para o novo HEIGHT
     if powerup:
-        pygame.draw.circle(screen, 'red', (140, 720), 15)
+        pygame.draw.circle(screen, 'red', (140, HEIGHT - 70), 15) # Ajustado para o novo HEIGHT
     for l in range(lives):
-        screen.blit(pygame.transform.scale(player_images[1], (40,40)), (650 + l * 40, 705))
+        screen.blit(pygame.transform.scale(player_images[1], (40,40)), (WIDTH - 150 + l * 40, HEIGHT - 40)) # Ajustado para o novo HEIGHT
     if game_over:
-        pygame.draw.rect(screen, 'dark gray', [50, 300, 800, 300], 0, 10)
-        pygame.draw.rect(screen, 'orange', [70, 320, 760, 260], 0, 10)
+        pygame.draw.rect(screen, 'dark gray', [50, HEIGHT // 2 - 150, WIDTH - 100, 300], 0, 10) # Ajustado para o novo HEIGHT
+        pygame.draw.rect(screen, 'orange', [70, HEIGHT // 2 - 130, WIDTH - 140, 260], 0, 10) # Ajustado para o novo HEIGHT
         gameover_text1 = font2.render('Game Over!', True, 'red')
         gameover_text2 = font.render(' Aperte [espaço] para recomeçar!', True, 'red')
-        gameover_rect1 = gameover_text1.get_rect(center=(900 // 2, 850 //2))
-        gameover_rect2 = gameover_text2.get_rect(center=(900 // 2, 950 //2))
+        gameover_rect1 = gameover_text1.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 50)) # Ajustado para o novo WIDTH e HEIGHT
+        gameover_rect2 = gameover_text2.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 20)) # Ajustado para o novo WIDTH e HEIGHT
         screen.blit(gameover_text1, gameover_rect1)
         screen.blit(gameover_text2, gameover_rect2)
     if game_won:
-        pygame.draw.rect(screen, 'white', [50, 300, 800, 300], 0, 10)
-        pygame.draw.rect(screen, 'dark gray', [70, 320, 760, 260], 0, 10)
+        pygame.draw.rect(screen, 'white', [50, HEIGHT // 2 - 150, WIDTH - 100, 300], 0, 10) # Ajustado para o novo HEIGHT
+        pygame.draw.rect(screen, 'dark gray', [70, HEIGHT // 2 - 130, WIDTH - 140, 260], 0, 10) # Ajustado para o novo HEIGHT
         gamewon_text1 = font2.render('Game Won!!!', True, 'yellow')
         gamewon_text2 = font.render('Aperte [espaço] para recomeçar!', True, 'yellow')
-        gamewon_rect1 = gamewon_text1.get_rect(center=(900 // 2, 850 // 2))
-        gamewon_rect2 = gamewon_text2.get_rect(center=(900 // 2, 950 // 2))
+        gamewon_rect1 = gamewon_text1.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 50)) # Ajustado para o novo WIDTH e HEIGHT
+        gamewon_rect2 = gamewon_text2.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 20)) # Ajustado para o novo WIDTH e HEIGHT
         screen.blit(gamewon_text1, gamewon_rect1)
         screen.blit(gamewon_text2, gamewon_rect2)
 
 def check_collisions(scor, power, power_count, eaten_inimigo):
+    # Ajusta o cálculo da altura e largura da célula para o novo HEIGHT
     cell_height = (HEIGHT - 50)  // 32
     cell_widht = WIDTH // 30
-    if 0 < player_x < 870:
+    if 0 < player_x < WIDTH - 30: # Ajustado para o novo WIDTH
         if level[center_y // cell_height][center_x // cell_widht] == 1:
             level[center_y // cell_height][center_x // cell_widht] = 0
             scor += 10
@@ -496,6 +502,7 @@ def check_collisions(scor, power, power_count, eaten_inimigo):
     return scor, power, power_count, eaten_inimigo
 
 def draw_board(level):
+    # Ajusta o cálculo da altura e largura da célula para o novo HEIGHT
     num1 = ((HEIGHT - 50) // 32)
     num2 = (WIDTH // 30)
     for i in range(len(level)):
@@ -597,11 +604,12 @@ def draw_player():
 def check_position(centerx, centery):
     # D, E, C, B
     turns = [False, False, False, False]
+    # Ajusta o cálculo da altura e largura da célula para o novo HEIGHT
     cell_height = (HEIGHT - 50) // 32
     cell_width = (WIDTH // 30)
     margem = 15
     # checa as colisões baseadas no center x e center y +/- um fugde number
-    if 0 <= centerx < WIDTH and 0 <= centery < HEIGHT - 50:
+    if 0 <= centerx < WIDTH and 0 <= centery < HEIGHT - 50: # Ajustado para o novo WIDTH e HEIGHT
         if direction == 0:
             if level[centery // cell_height][(centerx - margem) // cell_width] < 3:
                 turns[1] = True
@@ -644,106 +652,116 @@ def move_player(play_x, play_y):
     elif direction == 3 and turns_allowed[3]:
         play_y += player_speed
 
-        # Limita a posição dentro dos limites da tela
+    # Limita a posição dentro dos limites da tela (ajustado para o novo WIDTH e HEIGHT)
     play_x = max(-50, min(play_x, WIDTH + 50))
     play_y = max(0, min(play_y, HEIGHT - 50))
 
     return play_x, play_y
 
 def get_targets(player_x, player_y):
-    runaway_x = 900 if player_x < 450 else 0
-    runaway_y = 900 if player_y < 450 else 0
-    return_target = (380, 400)
+    # Ajusta os alvos de fuga para o novo WIDTH e HEIGHT
+    runaway_x = WIDTH if player_x < WIDTH // 2 else 0
+    runaway_y = HEIGHT if player_y < HEIGHT // 2 else 0
+    return_target = (WIDTH // 2 - 20, HEIGHT // 2 + 50) # Ajustado para o centro da caixa
 
     cloudiu_target = (0,0)
     pin_target = (0,0)
     glitc_target = (0,0)
     kerne_target = (0,0)
 
+    # Lógica de alvo para Cloudius
     if powerup:
         if not cloudius.dead and not eaten_inimigo[0]:
             cloudiu_target = (runaway_x, runaway_y)
         elif not cloudius.dead and eaten_inimigo[0]:
-            if 340 < cloudius.x_pos < 560 and 340 < cloudius.y_pos < 500:
-                cloudiu_target = (400, 100)
+            # Ajustar limites da caixa para alvo de retorno
+            if cloudius.box_xmin < cloudius.x_pos < cloudius.box_xmax and cloudius.box_ymin < cloudius.y_pos < cloudius.box_ymax:
+                cloudiu_target = (WIDTH // 2, 100) # Alvo genérico fora da caixa
             else:
                 cloudiu_target = (player_x, player_y)
         else:
             cloudiu_target = return_target
     else:
         if not cloudius.dead:
-            if 340 < cloudius.x_pos < 560 and 340 < cloudius.y_pos < 500:
-                cloudiu_target = (400, 100)
+            if cloudius.box_xmin < cloudius.x_pos < cloudius.box_xmax and cloudius.box_ymin < cloudius.y_pos < cloudius.box_ymax:
+                cloudiu_target = (WIDTH // 2, 100)
             else:
                 cloudiu_target = (player_x, player_y)
         else:
             cloudiu_target = return_target
 
 
+    # Lógica de alvo para Ping
     if powerup:
         if not ping.dead and not eaten_inimigo[1]:
             pin_target = (runaway_x, runaway_y)
         elif not ping.dead and eaten_inimigo[1]:
-            if 340 < ping.x_pos < 560 and 340 < ping.y_pos < 500:
-                pin_target = (400, 100)
+            if ping.box_xmin < ping.x_pos < ping.box_xmax and ping.box_ymin < ping.y_pos < ping.box_ymax:
+                pin_target = (WIDTH // 2, 100)
             else:
                 pin_target = (player_x, player_y)
         else:
             pin_target = return_target
     else:
         if not ping.dead:
-            if 340 < ping.x_pos < 560 and 340 < ping.y_pos < 500:
-                pin_target = (400, 100)
+            if ping.box_xmin < ping.x_pos < ping.box_xmax and ping.box_ymin < ping.y_pos < ping.box_ymax:
+                pin_target = (WIDTH // 2, 100)
             else:
-                pin_target = (player_x + 100, player_y - 100)
+                pin_target = (player_x + 100, player_y - 100) # Ajustado para o novo WIDTH/HEIGHT
         else:
             pin_target = return_target
 
+    # Lógica de alvo para Glitch
     if powerup:
         if not glitch.dead and not eaten_inimigo[2]:
             glitc_target = (player_x, runaway_y)
         elif not glitch.dead and eaten_inimigo[2]:
-            if 340 < glitch.x_pos < 560 and 340 < glitch.y_pos < 500:
-                glitc_target = (400, 100)
+            if glitch.box_xmin < glitch.x_pos < glitch.box_xmax and glitch.box_ymin < glitch.y_pos < glitch.box_ymax:
+                glitc_target = (WIDTH // 2, 100)
             else:
                 glitc_target = (player_x, player_y)
         else:
             glitc_target = return_target
     else:
         if not glitch.dead:
-            if 340 < glitch.x_pos < 560 and 340 < glitch.y_pos < 500:
-                glitc_target = (400, 100)
+            if glitch.box_xmin < glitch.x_pos < glitch.box_xmax and glitch.box_ymin < glitch.y_pos < glitch.box_ymax:
+                glitc_target = (WIDTH // 2, 100)
             else:
-                glitc_target = (player_x - 150, player_y + 50)
+                glitc_target = (player_x - 150, player_y + 50) # Ajustado para o novo WIDTH/HEIGHT
         else:
             glitc_target = return_target
 
+    # Lógica de alvo para Kernel
     if powerup:
         if not kernel.dead and not eaten_inimigo[3]:
             kerne_target = (runaway_x, runaway_y)
         elif not kernel.dead and eaten_inimigo[3]:
-            if 340 < kernel.x_pos < 560 and 340 < kernel.y_pos < 500:
-                kerne_target = (400, 100)
+            if kernel.box_xmin < kernel.x_pos < kernel.box_xmax and kernel.box_ymin < kernel.y_pos < kernel.box_ymax:
+                kerne_target = (WIDTH // 2, 100)
             else:
                 kerne_target = (player_x, player_y)
         else:
             kerne_target = return_target
     else:
         if not kernel.dead:
-            if 340 < kernel.x_pos < 560 and 340 < kernel.y_pos < 500:
-                kerne_target = (400, 100)
+            if kernel.box_xmin < kernel.x_pos < kernel.box_xmax and kernel.box_ymin < kernel.y_pos < kernel.box_ymax:
+                kerne_target = (WIDTH // 2, 100)
             else:
-                kerne_target = (player_x - 150, player_y + 50)
+                kerne_target = (player_x - 150, player_y + 50) # Ajustado para o novo WIDTH/HEIGHT
         else:
             kerne_target = return_target
 
     return [cloudiu_target, pin_target, glitc_target, kerne_target]
 
 
-cloudius = Inimigo(56, 58 , targets[0], inimigo_speeds[0], cloudius_img, 0, False, False, 0)
-ping = Inimigo(400, 438, targets[1], inimigo_speeds[1], ping_img, 1, False, False, 1)
-glitch = Inimigo(400, 438, targets[2], inimigo_speeds[2], glitch_img, 2, False, False, 2)
-kernel = Inimigo(400, 438, targets[3], inimigo_speeds[3], kernel_img, 3, False, False, 3)
+# Posições iniciais dos inimigos ajustadas proporcionalmente
+# Assumindo que a 'boards' é a mesma, as posições em pixels são relativas
+# 56, 58 -> canto superior esquerdo
+cloudius = Inimigo(56 * WIDTH // 900, 58 * HEIGHT // 950 , targets[0], inimigo_speeds[0], cloudius_img, 0, False, False, 0)
+# 400, 438 -> centro da caixa
+ping = Inimigo(400 * WIDTH // 900, 438 * HEIGHT // 950, targets[1], inimigo_speeds[1], ping_img, 1, False, False, 1)
+glitch = Inimigo(440 * WIDTH // 900, 438 * HEIGHT // 950, targets[2], inimigo_speeds[2], glitch_img, 2, False, False, 2)
+kernel = Inimigo(440 * WIDTH // 900, 438 * HEIGHT // 950, targets[3], inimigo_speeds[3], kernel_img, 3, False, False, 3)
 
 run = True
 
@@ -792,11 +810,11 @@ while run:
     if eaten_inimigo[0]:
         cloudius.speed = 4
     if eaten_inimigo[1]:
-        cloudius.speed = 4
+        ping.speed = 4
     if eaten_inimigo[2]:
-        cloudius.speed = 4
+        glitch.speed = 4
     if eaten_inimigo[3]:
-        cloudius.speed = 4
+        kernel.speed = 4
 
     game_won = True
     for i in range(len(level)):
@@ -828,27 +846,31 @@ while run:
     score, powerup, powerup_count, eaten_inimigo = check_collisions(score, powerup, powerup_count, eaten_inimigo)
 
     if not powerup:
-        if (player_circle.colliderect(cloudius.rect) and not cloudius.dead) or (player_circle.colliderect(ping.rect) and not ping.dead) or (player_circle.colliderect(kernel.rect) and not kernel.dead) or (player_circle.colliderect(glitch.rect) and not glitch.dead):
+        if (player_circle.colliderect(cloudius.rect) and not cloudius.dead) or \
+           (player_circle.colliderect(ping.rect) and not ping.dead) or \
+           (player_circle.colliderect(kernel.rect) and not kernel.dead) or \
+           (player_circle.colliderect(glitch.rect) and not glitch.dead):
             if lives > 0:
                 lives -= 1
                 startup_counter = 0
                 powerup = False
                 powerup_count = 0
-                player_x = 450
-                player_y = 663
+                player_x = WIDTH // 2 # Reset player position
+                player_y = int(650 * (HEIGHT / 950)) # Reset player position, proporcionalmente
                 direction = 0
                 direction_command = 0
-                cloudius.x_pos = 56
-                cloudius.y_pos = 58
+                # Reset enemy positions to adjusted values
+                cloudius.x_pos = 56 * WIDTH // 900
+                cloudius.y_pos = 58 * HEIGHT // 950
                 cloudius.direction = 0
-                ping.x_pos = 400
-                ping.y_pos = 438
+                ping.x_pos = 400 * WIDTH // 900
+                ping.y_pos = 438 * HEIGHT // 950
                 ping.direction = 2
-                glitch.x_pos = 440
-                glitch.y_pos = 438
+                glitch.x_pos = 440 * WIDTH // 900
+                glitch.y_pos = 438 * HEIGHT // 950
                 glitch.direction = 2
-                kernel.x_pos = 440
-                kernel.y_pos = 438
+                kernel.x_pos = 440 * WIDTH // 900
+                kernel.y_pos = 438 * HEIGHT // 950
                 kernel.direction = 2
                 eaten_inimigo = [False, False, False, False]
                 cloudius.dead = False
@@ -905,21 +927,22 @@ while run:
                 startup_counter = 0
                 powerup = False
                 powerup_count = 0
-                player_x = 450
-                player_y = 663
+                player_x = WIDTH // 2 # Reset player position
+                player_y = int(650 * (HEIGHT / 950)) # Reset player position, proporcionalmente
                 direction = 0
                 direction_command = 0
-                cloudius.x_pos = 56
-                cloudius.y_pos = 58
+                # Reset enemy positions to adjusted values
+                cloudius.x_pos = 56 * WIDTH // 900
+                cloudius.y_pos = 58 * HEIGHT // 950
                 cloudius.direction = 0
-                ping.x_pos = 400
-                ping.y_pos = 438
+                ping.x_pos = 400 * WIDTH // 900
+                ping.y_pos = 438 * HEIGHT // 950
                 ping.direction = 2
-                glitch.x_pos = 440
-                glitch.y_pos = 438
+                glitch.x_pos = 440 * WIDTH // 900
+                glitch.y_pos = 438 * HEIGHT // 950
                 glitch.direction = 2
-                kernel.x_pos = 440
-                kernel.y_pos = 438
+                kernel.x_pos = 440 * WIDTH // 900
+                kernel.y_pos = 438 * HEIGHT // 950
                 kernel.direction = 2
                 eaten_inimigo = [False, False, False, False]
                 cloudius.dead = False
@@ -950,6 +973,7 @@ while run:
         if direction_command == i and turns_allowed[i]:
              direction = i
 
+    # Ajusta o teletransporte do jogador para o novo WIDTH
     if player_x > WIDTH:
         player_x = 45
     elif player_x < 0:

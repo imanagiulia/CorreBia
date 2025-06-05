@@ -343,40 +343,66 @@ class Inimigo:
 
      self.center_x = self.x_pos + 22
      self.center_y = self.y_pos + 22
+     target_x, target_y = self.target
 
+     if self.dead:
+         if self.x_pos < target_x:
+             self.x_pos += self.speed
+         elif self.x_pos > target_x:
+             self.x_pos -= self.speed
+         if self.y_pos < target_y:
+             self.y_pos += self.speed
+         elif self.y_pos > target_y:
+             self.y_pos -= self.speed
+         return
 
-     if self.direction == 0 and self.turns[0]:  # direita
-         self.x_pos += self.speed
-     elif self.direction == 1 and self.turns[1]:  # esquerda
-         self.x_pos -= self.speed
-     elif self.direction == 2 and self.turns[2]:  # cima
-         self.y_pos -= self.speed
-     elif self.direction == 3 and self.turns[3]:  # baixo
-         self.y_pos += self.speed
+     dx = self.target[0] - self.x_pos
+     dy = self.target[1] - self.y_pos
+
+     if abs(dx) > abs(dy):
+         if dx > 0 and self.turns[0]:
+             self.x_pos += self.speed
+             self.direction = 0
+         elif dx < 0 and self.turns[1]:
+             self.x_pos -= self.speed
+             self.direction = 1
+         elif dy > 0 and self.turns[3]:
+             self.y_pos += self.speed
+             self.direction = 3
+         elif dy < 0 and self.turns[2]:
+             self.y_pos -= self.speed
+             self.direction = 2
+         else:
+             for i in range(4):
+                 if self.turns[i]:
+                     self.direction = i
+                     if self.direction == 0:
+                         self.x_pos += self.speed
+                     elif self.direction == 1:
+                         self.x_pos -= self.speed
+                     elif self.direction == 2:
+                         self.x_pos -= self.speed
+                     elif self.direction == 3:
+                         self.x_pos += self.speed
      else:
-         # Colidiu com papin — precisa virar
-         new_direction = False
-         for i in range(4):
-             if self.turns[i]:
-                 self.direction = i
-                 new_direction = True
-                 break
-
-         if new_direction:
-            if self.direction == 0:
-                 self.x_pos += self.speed
-            elif self.direction == 1:
-                 self.x_pos -= self.speed
-            elif self.direction == 2:
-                 self.y_pos -= self.speed
-            elif self.direction == 3:
-                 self.y_pos += self.speed
+         if dy > 0 and self.turns[3]:
+             self.y_pos += self.speed
+             self.direction = 3
+         elif dy < 0 and self.turns[2]:
+             self.y_pos -= self.speed
+             self.direction = 2
+         elif dx > 0 and self.turns[0]:
+             self.x_pos += self.speed
+             self.direction = 0
+         elif dx < 0 and self.turns[1]:
+             self.x_pos -= self.speed
+             self.direction = 1
 
          # Teleporte horizontal (túnel) (ajustado para o novo WIDTH)
      if self.x_pos < -30:
          self.x_pos = WIDTH
      elif self.x_pos > WIDTH:
-         self.x_pos -= 30
+         self.x_pos -= 25
 
     def move_ping(self): # vira para cima ou para baixo qualquer momento para perseguir, mas para esquerda ou para direita somente em colisões
         self.center_x = self.x_pos + 22
@@ -462,8 +488,6 @@ class Inimigo:
 def draw_alter():
     score_text = font.render(f'Score: {score}', True, 'white')
     screen.blit(score_text, (10, HEIGHT - 30)) # Ajustado para o novo HEIGHT
-    if powerup:
-        pygame.draw.circle(screen, 'red', (140, HEIGHT - 70), 15) # Ajustado para o novo HEIGHT
     for l in range(lives):
         screen.blit(pygame.transform.scale(player_images[1], (40,40)), (WIDTH - 150 + l * 40, HEIGHT - 40)) # Ajustado para o novo HEIGHT
     if game_over:
