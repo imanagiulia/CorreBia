@@ -78,7 +78,7 @@ class Inimigo:
 
         # Posição central da caixa dos inimigos, ajustada para o novo HEIGHT
         self.box_center_x = WIDTH // 2
-        self.box_center_y = HEIGHT // 2 + 50 # Ajustado para manter centralizado na área de jogo
+        self.box_center_y = HEIGHT // 2 + 30 # Ajustado para manter centralizado na área de jogo
 
         # Limites da caixa dos inimigos, ajustados proporcionalmente
         box_width = 200
@@ -270,7 +270,6 @@ class Inimigo:
             self.x_pos, self.y_pos, self.direction = self.move_kernel()
 
     def move_kernel(self): # vira sempre que for vantajoso para perseguição
-        #semáforo
         self.center_x = self.x_pos + 22
         self.center_y = self.y_pos + 22
 
@@ -285,27 +284,26 @@ class Inimigo:
                 self.y_pos += self.speed
             elif self.y_pos > target_y:
                 self.y_pos -= self.speed
-
             return
 
         dx = self.target[0] - self.x_pos
         dy = self.target[1] - self.y_pos
-         # D, E, C, B
 
-        if abs(dx) > abs(dy): # mov horizontal
-            if dx > 0 and self.turns[0]:
+        # D, E, C, B (Direita, Esquerda, Cima, Baixo)
+        if abs(dx) > abs(dy): # Movimento horizontal preferencial
+            if dx > 0 and self.turns[0]: # Se o alvo está à direita e pode virar
                 self.x_pos += self.speed
                 self.direction = 0
-            elif dx < 0 and self.turns[1]:
+            elif dx < 0 and self.turns[1]: # Se o alvo está à esquerda e pode virar
                 self.x_pos -= self.speed
                 self.direction = 1
-            elif dy > 0 and self.turns[3]:
+            elif dy > 0 and self.turns[3]: # Senão, tenta ir para baixo se puder
                 self.y_pos += self.speed
                 self.direction = 3
-            elif dy < 0 and self.turns[2]:
+            elif dy < 0 and self.turns[2]: # Senão, tenta ir para cima se puder
                 self.y_pos -= self.speed
                 self.direction = 2
-            else:
+            else: # Se nenhuma das direções preferenciais funciona, tenta qualquer uma
                 for i in range(4):
                     if self.turns[i]:
                         self.direction = i
@@ -314,23 +312,24 @@ class Inimigo:
                         elif self.direction == 1:
                             self.x_pos -= self.speed
                         elif self.direction == 2:
-                            self.y_pos -= self.speed
-                        elif self.direction == 3: # Correção: usar self.direction aqui
-                            self.y_pos += self.speed
+                            self.y_pos -= self.speed # CORRIGIDO: Usar self.y_pos
+                        elif self.direction == 3:
+                            self.y_pos += self.speed # CORRIGIDO: Usar self.y_pos
                         break
-        else: # mov vertical
-            if dy > 0 and self.turns[3]:
+        else: # Movimento vertical preferencial
+            if dy > 0 and self.turns[3]: # Se o alvo está abaixo e pode virar
                 self.y_pos += self.speed
                 self.direction = 3
-            elif dy < 0 and self.turns[2]:
+            elif dy < 0 and self.turns[2]: # Se o alvo está acima e pode virar
                 self.y_pos -= self.speed
                 self.direction = 2
-            elif dx > 0 and self.turns[0]:
+            elif dx > 0 and self.turns[0]: # Senão, tenta ir para direita se puder
                 self.x_pos += self.speed
                 self.direction = 0
-            elif dx < 0 and self.turns[1]:
+            elif dx < 0 and self.turns[1]: # Senão, tenta ir para esquerda se puder
                 self.x_pos -= self.speed
                 self.direction = 1
+            # Não precisa de 'else' aqui, pois se não houver movimento, ele mantém a direção atual
 
         #teletransporte túnel (ajustado para o novo WIDTH)
         if self.x_pos < -30:
@@ -339,44 +338,71 @@ class Inimigo:
             self.x_pos = -25
 
     def move_cloudius(self): # vira sempre que colidir com paping, caso contrário continua reto
-     # D, E, C, B
-
      self.center_x = self.x_pos + 22
      self.center_y = self.y_pos + 22
+     target_x, target_y = self.target
 
+     if self.dead:
+         if self.x_pos < target_x:
+             self.x_pos += self.speed
+         elif self.x_pos > target_x:
+             self.x_pos -= self.speed
+         if self.y_pos < target_y:
+             self.y_pos += self.speed
+         elif self.y_pos > target_y:
+             self.y_pos -= self.speed
+         return
 
-     if self.direction == 0 and self.turns[0]:  # direita
-         self.x_pos += self.speed
-     elif self.direction == 1 and self.turns[1]:  # esquerda
-         self.x_pos -= self.speed
-     elif self.direction == 2 and self.turns[2]:  # cima
-         self.y_pos -= self.speed
-     elif self.direction == 3 and self.turns[3]:  # baixo
-         self.y_pos += self.speed
-     else:
-         # Colidiu com papin — precisa virar
-         new_direction = False
-         for i in range(4):
-             if self.turns[i]:
-                 self.direction = i
-                 new_direction = True
-                 break
+     dx = self.target[0] - self.x_pos
+     dy = self.target[1] - self.y_pos
 
-         if new_direction:
-            if self.direction == 0:
-                 self.x_pos += self.speed
-            elif self.direction == 1:
-                 self.x_pos -= self.speed
-            elif self.direction == 2:
-                 self.y_pos -= self.speed
-            elif self.direction == 3:
-                 self.y_pos += self.speed
+     # D, E, C, B (Direita, Esquerda, Cima, Baixo)
+     if abs(dx) > abs(dy): # Movimento horizontal preferencial
+         if dx > 0 and self.turns[0]:
+             self.x_pos += self.speed
+             self.direction = 0
+         elif dx < 0 and self.turns[1]:
+             self.x_pos -= self.speed
+             self.direction = 1
+         elif dy > 0 and self.turns[3]:
+             self.y_pos += self.speed # CORRIGIDO: Usar self.y_pos
+             self.direction = 3
+         elif dy < 0 and self.turns[2]:
+             self.y_pos -= self.speed # CORRIGIDO: Usar self.y_pos
+             self.direction = 2
+         else: # Se nenhuma das direções preferenciais funciona, tenta qualquer uma
+             for i in range(4):
+                 if self.turns[i]:
+                     self.direction = i
+                     if self.direction == 0:
+                         self.x_pos += self.speed
+                     elif self.direction == 1:
+                         self.x_pos -= self.speed
+                     elif self.direction == 2:
+                         self.y_pos -= self.speed # CORRIGIDO: Usar self.y_pos
+                     elif self.direction == 3:
+                         self.y_pos += self.speed # CORRIGIDO: Usar self.y_pos
+                     break
+     else: # Movimento vertical preferencial
+         if dy > 0 and self.turns[3]:
+             self.y_pos += self.speed
+             self.direction = 3
+         elif dy < 0 and self.turns[2]:
+             self.y_pos -= self.speed
+             self.direction = 2
+         elif dx > 0 and self.turns[0]:
+             self.x_pos += self.speed
+             self.direction = 0
+         elif dx < 0 and self.turns[1]:
+             self.x_pos -= self.speed
+             self.direction = 1
+         # Não precisa de 'else' aqui
 
-         # Teleporte horizontal (túnel) (ajustado para o novo WIDTH)
+     # Teleporte horizontal (túnel) (ajustado para o novo WIDTH e consistência)
      if self.x_pos < -30:
-         self.x_pos = WIDTH
-     elif self.x_pos > WIDTH:
-         self.x_pos -= 30
+         self.x_pos = WIDTH - 45 # CORRIGIDO: Para consistência com outros fantasmas
+     elif self.x_pos > WIDTH - 15:
+         self.x_pos = -25 # CORRIGIDO: Para consistência com outros fantasmas
 
     def move_ping(self): # vira para cima ou para baixo qualquer momento para perseguir, mas para esquerda ou para direita somente em colisões
         self.center_x = self.x_pos + 22
@@ -385,19 +411,20 @@ class Inimigo:
         dx = self.target[0] - self.x_pos
         dy = self.target[1] - self.y_pos
 
+        # Prioriza movimento vertical
         if dy > 0 and self.turns[3]:
             self.y_pos += self.speed
             self.direction = 3
         elif dy < 0 and self.turns[2]:
             self.y_pos -= self.speed
             self.direction = 2
-        elif dx > 0 and self.turns[0]:
+        elif dx > 0 and self.turns[0]: # Se não puder mover verticalmente, tenta horizontal
             self.x_pos += self.speed
             self.direction = 0
         elif dx < 0 and self.turns[1]:
             self.x_pos -= self.speed
             self.direction = 1
-        else:
+        else: # Se nenhuma das direções preferenciais funciona, tenta qualquer uma
             for i in range(4):
                 if self.turns[i]:
                     self.direction = i
@@ -406,9 +433,9 @@ class Inimigo:
                     elif self.direction == 1:
                         self.x_pos -= self.speed
                     elif self.direction == 2:
-                        self.y_pos -= self.speed
-                    elif self.direction == 3: # Correção: usar self.direction aqui
-                        self.y_pos += self.speed
+                        self.y_pos -= self.speed # CORRIGIDO: Usar self.y_pos
+                    elif self.direction == 3:
+                        self.y_pos += self.speed # CORRIGIDO: Usar self.y_pos
                     break
 
         # Teleporte túnel (ajustado para o novo WIDTH)
@@ -418,26 +445,26 @@ class Inimigo:
             self.x_pos = -25
 
     def move_glitch(self): # vira para a esquerda ou para a direita sempre que for vantajoso para perseguição, mas para cima ou para baixo apenas em colisões
-        # D, E, C, B
         self.center_x = self.x_pos + 22
         self.center_y = self.y_pos + 22
 
         dx = self.target[0] - self.x_pos
         dy = self.target[1] - self.y_pos
 
+        # Prioriza movimento horizontal
         if dx > 0 and self.turns[0]:
             self.x_pos += self.speed
             self.direction = 0
         elif dx < 0 and self.turns[1]:
             self.x_pos -= self.speed
             self.direction = 1
-        elif dy > 0  and self.turns[3]:
+        elif dy > 0  and self.turns[3]: # Se não puder mover horizontalmente, tenta vertical
             self.y_pos += self.speed
             self.direction = 3
         elif dy < 0  and self.turns[2]:
             self.y_pos -= self.speed
             self.direction = 2
-        else:
+        else: # Se nenhuma das direções preferenciais funciona, tenta qualquer uma
             for i in range(4):
                 if self.turns[i]:
                     self.direction = i
@@ -446,9 +473,9 @@ class Inimigo:
                     elif self.direction == 1:
                         self.x_pos -= self.speed
                     elif self.direction == 2:
-                        self.y_pos -= self.speed
-                    elif self.direction == 3: # Correção: usar self.direction aqui
-                        self.y_pos += self.speed
+                        self.y_pos -= self.speed # CORRIGIDO: Usar self.y_pos
+                    elif self.direction == 3:
+                        self.y_pos += self.speed # CORRIGIDO: Usar self.y_pos
                     break
 
         # Teleporte túnel (ajustado para o novo WIDTH)
@@ -462,8 +489,6 @@ class Inimigo:
 def draw_alter():
     score_text = font.render(f'Score: {score}', True, 'white')
     screen.blit(score_text, (10, HEIGHT - 30)) # Ajustado para o novo HEIGHT
-    if powerup:
-        pygame.draw.circle(screen, 'red', (140, HEIGHT - 70), 15) # Ajustado para o novo HEIGHT
     for l in range(lives):
         screen.blit(pygame.transform.scale(player_images[1], (40,40)), (WIDTH - 150 + l * 40, HEIGHT - 40)) # Ajustado para o novo HEIGHT
     if game_over:
@@ -942,7 +967,7 @@ while run:
                 glitch.y_pos = 438 * HEIGHT // 950
                 glitch.direction = 2
                 kernel.x_pos = 440 * WIDTH // 900
-                kernel.y_pos = 438 * HEIGHT // 950
+                kernel.y_y_pos = 438 * HEIGHT // 950
                 kernel.direction = 2
                 eaten_inimigo = [False, False, False, False]
                 cloudius.dead = False
