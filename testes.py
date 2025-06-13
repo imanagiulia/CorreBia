@@ -941,10 +941,9 @@ while run:
                 powerup = False
                 powerup_count = 0
                 player_x = WIDTH // 2 # Reset player position
-                player_y = int(650 * (HEIGHT / 950)) # Reset player position, proporcionalmente
+                player_y = int(650 * (HEIGHT / 950)) 
                 direction = 0
                 direction_command = 0
-                # Reset enemy positions to adjusted values
                 cloudius.x_pos = 56 * WIDTH // 900
                 cloudius.y_pos = 58 * HEIGHT // 950
                 cloudius.direction = 0
