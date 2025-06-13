@@ -1,6 +1,6 @@
 # 0 = retângulo preto vazio, 1 = bola, 2 = bola grande, 3 = linha vertical,
 # 4 = linha horizontal, 5 = topo direita, 6 = topo esquerda, 7 = baixo esquerda, 8 = baixo direita
-# 9 = portão branco, 10 - correção de bug
+# 9 = portão branco
 boards = [
 [6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5],
 [3, 6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 3],
