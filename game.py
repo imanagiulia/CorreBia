@@ -837,10 +837,9 @@ while run:
                 powerup = False
                 powerup_count = 0
                 player_x = WIDTH // 2 # Reset player position
-                player_y = int(650 * (HEIGHT / 950)) # Reset player position, proporcionalmente
+                player_y = int(650 * (HEIGHT / 950))
                 direction = 0
                 direction_command = 0
-                # Reset enemy positions to adjusted values
                 cloudius.x_pos = 56 * WIDTH // 900
                 cloudius.y_pos = 58 * HEIGHT // 950
                 cloudius.direction = 0
@@ -908,11 +907,10 @@ while run:
                 startup_counter = 0
                 powerup = False
                 powerup_count = 0
-                player_x = WIDTH // 2 # Reset player position
-                player_y = int(650 * (HEIGHT / 950)) # Reset player position, proporcionalmente
+                player_x = WIDTH // 2
+                player_y = int(650 * (HEIGHT / 950))
                 direction = 0
                 direction_command = 0
-                # Reset enemy positions to adjusted values
                 cloudius.x_pos = 56 * WIDTH // 900
                 cloudius.y_pos = 58 * HEIGHT // 950
                 cloudius.direction = 0
@@ -953,12 +951,6 @@ while run:
     for i in range(4):
         if direction_command == i and turns_allowed[i]:
              direction = i
-
-    # Ajusta o teletransporte do jogador para o novo WIDTH
-    if player_x > WIDTH:
-        player_x = 45
-    elif player_x < 0:
-        player_x = WIDTH - 45
 
 
     if cloudius.dead and cloudius.in_box:
