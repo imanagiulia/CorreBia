@@ -132,6 +132,7 @@ class Inimigo:
         # Ajusta os limites da caixa dos inimigos
         is_in_box = (self.box_xmin <= self.x_pos < self.box_xmax and self.box_ymin < self.y_pos < self.box_ymax)
 
+        # atualiza os estados das posições dos inimigos
         if is_in_box:
             self.in_box = True
             if self.dead:
@@ -154,16 +155,16 @@ class Inimigo:
 
         # verifica se pode virar d, e, c, b
         # verifica as células adjacentes - ao lado - para saber se são caminhos livres
-        if coluna + 1 < len(level[0]):
-            if level[linha][coluna + 1] < 3 or level[linha][coluna + 1] == 9:
+        if coluna + 1 < len(level[0]): # garante que não está tenando acessar uma coluna fora dos limites do mapa a direita 
+            if level[linha][coluna + 1] < 3 or level[linha][coluna + 1] == 9: # 9 número na matriz do mapa que representa o "portão" da caixa dos fantasmas
                 turns[0] = True
-        if coluna - 1 >= 0:
+        if coluna - 1 >= 0: # esquerda
             if level[linha][coluna - 1] < 3 or level[linha][coluna - 1] == 9:
                 turns[1] = True
-        if linha - 1 >= 0:
+        if linha - 1 >= 0: # cima
             if level[linha - 1][coluna] < 3 or level[linha - 1][coluna] == 9:
                 turns[2] = True
-        if linha + 1 < len(level):
+        if linha + 1 < len(level): # baixo
             if level[linha + 1][coluna] < 3 or level[linha + 1][coluna] == 9:
                 turns[3] = True
 
@@ -616,11 +617,11 @@ def check_position(centerx, centery):
     cell_width = (WIDTH // 30)
     margem = 15
     # checa as colisões baseadas no center x e center y +/- um fugde number para ver se ele não está colidindo com alguma parede
-    if 0 <= centerx < WIDTH and 0 <= centery < HEIGHT - 50:
-        if direction == 0:
+    if 0 <= centerx < WIDTH and 0 <= centery < HEIGHT - 50: # garante que o jogador esteja detro dos limites jogáveis da tela
+        if direction == 0: # verifica se a célula a direita não é uma parede (< 3), se tiver livre ele pode virar. mesma coisa para os outros ( D, E, C, B)
             if level[centery // cell_height][(centerx - margem) // cell_width] < 3:
                 turns[1] = True
-        if direction == 1:
+        if direction == 1: 
             if level[centery // cell_height][(centerx + margem) // cell_width] < 3:
                 turns[0] = True
         if direction == 2:
